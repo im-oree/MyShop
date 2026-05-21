@@ -118,6 +118,19 @@ router.patch('/employees/:id', authenticate, async (req: Request, res: Response)
   }
 })
 
+router.delete('/employees/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const owner = await requireSellerOwner(req, res)
+    if (!owner) return
+
+    const removed = await userService.removeEmployee(owner.id, req.params.id)
+    sendSuccess(res, removed, 'Employee removed successfully')
+  } catch (error) {
+    console.error('Remove employee error:', error)
+    sendError(res, String(error), 500, 'Failed to remove employee')
+  }
+})
+
 /**
  * POST /api/users/:id/apply-seller
  * User applies to become a seller

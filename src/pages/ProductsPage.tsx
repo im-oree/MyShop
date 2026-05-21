@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ProductCard from '@/components/ProductCard'
 import Dropdown, { type DropdownOption } from '@/components/Dropdown'
 import { PRODUCT_CATEGORIES } from '@/constants/categories'
@@ -14,6 +15,12 @@ const SORT_OPTIONS: DropdownOption[] = [
   { value: 'name-asc',   label: 'Name: A–Z'       },
 ]
 
+const STOCK_OPTIONS: DropdownOption[] = [
+  { value: 'all', label: 'All stock' },
+  { value: 'low-stock', label: 'Low stock (<=5)' },
+  { value: 'out-of-stock', label: 'Out of stock' },
+]
+
 function ProductsPage() {
   const [products, setProducts]           = useState<Product[]>([])
   const [loading, setLoading]             = useState(true)
@@ -21,6 +28,10 @@ function ProductsPage() {
   const [query, setQuery]                 = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [sort, setSort]                   = useState<SortOption>('default')
+  const [stockFilter, setStockFilter]     = useState<'all' | 'low-stock' | 'out-of-stock'>('all')
+
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const loadProducts = useCallback(async () => {
     try {
@@ -38,6 +49,12 @@ function ProductsPage() {
 
   useEffect(() => {
     void loadProducts()
+    // read stock filter from URL (e.g. /products?stock=out-of-stock)
+    const params = new URLSearchParams(location.search)
+    const stock = params.get('stock')
+    if (stock === 'out-of-stock') setStockFilter('out-of-stock')
+    else if (stock === 'low-stock') setStockFilter('low-stock')
+    else setStockFilter('all')
   }, [loadProducts])
 
   const categories = useMemo(() => {
@@ -60,7 +77,13 @@ function ProductsPage() {
         product.name.toLowerCase().includes(normalized) ||
         product.description.toLowerCase().includes(normalized) ||
         product.tags.some((tag) => tag.toLowerCase().includes(normalized))
-      return matchesCategory && matchesSearch
+      // apply stock filter
+      const passesStock =
+        stockFilter === 'all' ||
+        (stockFilter === 'out-of-stock' && product.stock <= 0) ||
+        (stockFilter === 'low-stock' && product.stock > 0 && product.stock <= 5)
+
+      return matchesCategory && matchesSearch && passesStock
     })
 
     return [...filtered].sort((a, b) => {
@@ -71,14 +94,19 @@ function ProductsPage() {
       if (sort === 'name-asc')   return a.name.localeCompare(b.name)
       return 0
     })
-  }, [products, query, activeCategory, sort])
+  }, [products, query, activeCategory, sort, stockFilter])
 
-  const hasActiveFilters = query.trim() || activeCategory !== 'All' || sort !== 'default'
+  const hasActiveFilters = Boolean(query.trim()) || activeCategory !== 'All' || sort !== 'default' || stockFilter !== 'all'
 
   const clearFilters = () => {
     setQuery('')
     setActiveCategory('All')
     setSort('default')
+    setStockFilter('all')
+    // remove stock param from url
+    const params = new URLSearchParams(location.search)
+    params.delete('stock')
+    navigate(`${location.pathname}${params.toString() ? `?${params.toString()}` : ''}`, { replace: true })
   }
 
   return (
@@ -134,6 +162,20 @@ function ProductsPage() {
           value={sort}
           onChange={(val) => setSort(val as SortOption)}
           placeholder="Sort by"
+        />
+        {/* Stock filter */}
+        <Dropdown
+          options={STOCK_OPTIONS}
+          value={stockFilter}
+          onChange={(val) => {
+            const sf = val as 'all' | 'low-stock' | 'out-of-stock'
+            setStockFilter(sf)
+            const params = new URLSearchParams(location.search)
+            if (sf === 'all') params.delete('stock')
+            else params.set('stock', sf)
+            navigate(`${location.pathname}${params.toString() ? `?${params.toString()}` : ''}`, { replace: true })
+          }}
+          placeholder="Stock"
         />
       </div>
 

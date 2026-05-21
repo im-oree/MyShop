@@ -45,4 +45,9 @@ export const userService = {
     const { data } = await apiClient.patch(`/users/employees/${employeeUserId}`, payload)
     return data.data as User
   },
+
+  async removeEmployee(employeeUserId: string) {
+    const { data } = await apiClient.delete(`/users/employees/${employeeUserId}`)
+    return data.data as User
+  },
 }

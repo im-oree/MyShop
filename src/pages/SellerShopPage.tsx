@@ -225,6 +225,9 @@ function SellerShopPage() {
   const [stockFilter,     setStockFilter]     = useState<'all' | 'in-stock' | 'low' | 'out'>('all')
   const [sortBy,          setSortBy]          = useState<'newest' | 'price-asc' | 'price-desc' | 'stock'>('newest')
   const [showSidebar,     setShowSidebar]     = useState(false)
+  const [hideOutOfStockOnDashboard, setHideOutOfStockOnDashboard] = useState(true)
+  const [analyticsSeries, setAnalyticsSeries] = useState<Array<{ label: string; amount: number; count?: number }>>([])
+  const [topSelling, setTopSelling] = useState<Product[]>([])
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'seller' || currentRole !== 'seller') {
@@ -245,6 +248,23 @@ function SellerShopPage() {
     }
     void load()
   }, [isAuthenticated, user, currentRole, navigate])
+
+  // load seller analytics + top selling preview
+  useEffect(() => {
+    let mounted = true
+    void (async () => {
+      try {
+        const data = await productService.getMineAnalytics('30day')
+        if (!mounted) return
+        setAnalyticsSeries(data.series || data?.data?.series || [])
+        const tops = data.topProducts || data.topSelling || data?.data?.topProducts || []
+        if (Array.isArray(tops) && tops.length) setTopSelling(tops)
+      } catch (err) {
+        // ignore
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
 
   /* ── Stats ── */
   const stats = useMemo(() => {

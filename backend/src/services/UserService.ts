@@ -206,4 +206,25 @@ export class UserService {
     }
     return updated
   }
+
+  async removeEmployee(sellerId: string, employeeUserId: string): Promise<User> {
+    const employee = await this.getById(employeeUserId)
+    if (!employee || employee.role !== 'employee' || employee.employeeOfSellerId !== sellerId) {
+      throw new Error('Employee not found for this seller')
+    }
+
+    await this.update(employeeUserId, {
+      role: 'user',
+      employeeOfSellerId: undefined,
+      employeeTitle: undefined,
+      employeeRoleTemplate: undefined,
+      employeePermissions: undefined,
+    })
+
+    const updated = await this.getById(employeeUserId)
+    if (!updated) {
+      throw new Error('Failed to remove employee')
+    }
+    return updated
+  }
 }

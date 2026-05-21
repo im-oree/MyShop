@@ -4,6 +4,7 @@ import apiClient from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
 import type { User } from '@/types'
 import Dropdown from '@/components/Dropdown'
+import { productService } from '@/services/productService'
 
 type RevenueRange = 'today' | 'week' | 'month'
 type AdminSection = 'users' | 'revenue' | 'verification'
@@ -188,6 +189,28 @@ function AdminDashboard() {
     { key: 'verification', label: 'Seller verification', description: 'Approve, disapprove, and inspect applicants' },
   ]
 
+  const [topProducts, setTopProducts] = useState<any[]>([])
+
+  const STOCK_FILTERS = [
+    { value: 'all', label: 'All' },
+    { value: 'low-stock', label: 'Low stock' },
+    { value: 'out-of-stock', label: 'Out of stock' },
+  ]
+
+  useEffect(() => {
+    let mounted = true
+    async function loadTop() {
+      try {
+        const data = await productService.getFeatured(6)
+        if (mounted) setTopProducts(data.items || data || [])
+      } catch (err) {
+        console.error('Failed to load featured products', err)
+      }
+    }
+    void loadTop()
+    return () => { mounted = false }
+  }, [])
+
   if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
     return null
   }
@@ -248,6 +271,54 @@ function AdminDashboard() {
               <p className="text-sm text-muted-text mt-1">Total products</p>
             </div>
             <span className="text-xs font-semibold rounded-full bg-blue-50 text-blue-700 px-3 py-1">live</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick inventory + top sellers */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:col-span-1">
+          <h3 className="text-sm font-semibold text-text">Inventory quick filters</h3>
+          <p className="text-xs text-muted-text mt-1">Jump to product list filtered by stock state</p>
+          <div className="mt-3 flex items-center gap-2">
+            <Dropdown
+              options={STOCK_FILTERS}
+              value="all"
+              onChange={(val) => {
+                const v = val as string
+                if (v === 'all') navigate('/products')
+                else navigate(`/products?stock=${encodeURIComponent(v)}`)
+              }}
+              placeholder="Filter"
+              buttonClassName="px-2 py-1 text-sm"
+            />
+            <Link to="/products" className="text-sm text-secondary hover:underline">View all products</Link>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-text">Top selling (compact)</h3>
+              <p className="text-sm text-muted-text mt-1">Small preview of popular items</p>
+            </div>
+            <Link to="/products" className="text-sm text-secondary hover:underline">See all</Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            {topProducts.length === 0 ? (
+              <div className="text-sm text-muted-text">No featured products</div>
+            ) : (
+              topProducts.map((p) => (
+                <Link key={p.id} to={`/products`} className="rounded-xl border border-border p-2 flex flex-col items-center text-center text-xs hover:shadow-sm">
+                  <div className="w-20 h-20 bg-gray-50 rounded-md overflow-hidden flex items-center justify-center">
+                    {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover"/> : <div className="text-muted-text">No image</div>}
+                  </div>
+                  <div className="mt-2 font-medium text-text truncate w-20">{p.name}</div>
+                  <div className="text-[11px] text-muted-text mt-1">{currency(p.price)}</div>
+                  <div className={`text-[11px] mt-1 ${p.stock <= 0 ? 'text-red-600' : p.stock <= 5 ? 'text-amber-700' : 'text-green-700'}`}>Stock: {p.stock}</div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </div>
