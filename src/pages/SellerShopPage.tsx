@@ -226,7 +226,7 @@ function SellerShopPage() {
   const [sortBy,          setSortBy]          = useState<'newest' | 'price-asc' | 'price-desc' | 'stock'>('newest')
   const [showSidebar,     setShowSidebar]     = useState(false)
   const [hideOutOfStockOnDashboard, setHideOutOfStockOnDashboard] = useState(true)
-  const [hideProductListOnDashboard, setHideProductListOnDashboard] = useState(true)
+  const hideProductListOnDashboard = true
   const [analyticsSeries, setAnalyticsSeries] = useState<Array<{ label: string; amount: number; count?: number }>>([])
   const [topSelling, setTopSelling] = useState<Product[]>([])
 
@@ -605,7 +605,6 @@ function SellerShopPage() {
                 const img = resolved.images?.[0]
                 const name = resolved.name || p.name || 'Untitled'
                 const stock = typeof resolved.stock === 'number' ? resolved.stock : (p.stock ?? 0)
-                const price = resolved.salePrice ?? resolved.price ?? p.price
                 return (
                   <div key={p.id} className="text-center text-xs">
                     <div className="w-16 h-16 rounded-md bg-gray-50 overflow-hidden mx-auto">
@@ -795,7 +794,7 @@ function SellerShopPage() {
             )}
 
             {/* Dashboard product list hidden? show CTA if true */}
-        {hideProductListOnDashboard ? (
+            {hideProductListOnDashboard ? (
           <div className="rounded-2xl border border-border bg-white p-6 mb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -808,7 +807,7 @@ function SellerShopPage() {
               </div>
             </div>
           </div>
-        ) : (
+          ) : (
           /* ── Loading Skeleton ── */
           loading ? (
               view === 'grid' ? (
@@ -828,7 +827,7 @@ function SellerShopPage() {
                     </div>
                   ))}
                 </div>
-              ) : (
+                ) : (
                 <div className="space-y-2.5">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border">
@@ -841,9 +840,7 @@ function SellerShopPage() {
                     </div>
                   ))}
                 </div>
-              )
-            ) : filteredProducts.length === 0 ? (
-              /* ── Empty State ── */
+              ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 sm:py-20
                               rounded-2xl border border-dashed border-border bg-white
                               text-center px-4 animate-fade-in">
@@ -921,7 +918,7 @@ function SellerShopPage() {
                   Showing {dashboardVisibleProducts.length} of {stats.total} products
                 </p>
               </>
-        )}
+          )}
       </div>
     </div>
   </div>
