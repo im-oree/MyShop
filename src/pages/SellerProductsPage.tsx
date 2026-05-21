@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { Product } from '@/types'
 import { formatPrice } from '@/utils'
@@ -34,6 +34,8 @@ function SellerProductsPage() {
   const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'low' | 'out'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'stock'>('newest')
 
+  const location = useLocation()
+
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'seller' || currentRole !== 'seller') {
       navigate('/profile')
@@ -54,7 +56,15 @@ function SellerProductsPage() {
     }
 
     void loadSellerProducts()
-  }, [isAuthenticated, user, currentRole, navigate])
+
+    // read stock filter from URL (e.g. /seller/products?stock=out)
+    const params = new URLSearchParams(location.search)
+    const stock = params.get('stock')
+    if (stock === 'out') setStockFilter('out')
+    else if (stock === 'low') setStockFilter('low')
+    else if (stock === 'in-stock') setStockFilter('in-stock')
+    else setStockFilter('all')
+  }, [isAuthenticated, user, currentRole, navigate, location.search])
 
   const stats = useMemo(() => {
     const total = products.length

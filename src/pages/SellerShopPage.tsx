@@ -226,6 +226,7 @@ function SellerShopPage() {
   const [sortBy,          setSortBy]          = useState<'newest' | 'price-asc' | 'price-desc' | 'stock'>('newest')
   const [showSidebar,     setShowSidebar]     = useState(false)
   const [hideOutOfStockOnDashboard, setHideOutOfStockOnDashboard] = useState(true)
+  const [hideProductListOnDashboard, setHideProductListOnDashboard] = useState(true)
   const [analyticsSeries, setAnalyticsSeries] = useState<Array<{ label: string; amount: number; count?: number }>>([])
   const [topSelling, setTopSelling] = useState<Product[]>([])
 
@@ -278,6 +279,8 @@ function SellerShopPage() {
     return { total, featured, outOfStock, lowStock, avgPrice, inventoryValue, totalStock }
   }, [products])
 
+  
+
   /* ── Filtered & sorted ── */
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -317,6 +320,10 @@ function SellerShopPage() {
     setEditingProduct(p)
     setShowProductForm(true)
   }, [])
+
+  const dashboardVisibleProducts = useMemo(() => {
+    return filteredProducts.filter(p => !(hideOutOfStockOnDashboard && p.stock <= 0))
+  }, [filteredProducts, hideOutOfStockOnDashboard])
 
   const handleDeleteProduct = useCallback(async (p: Product) => {
     if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
@@ -516,7 +523,7 @@ function SellerShopPage() {
         </div>
 
         {/* ══════════════════════════════════
-            STOCK ALERTS
+            STOCK ALERTS (with quick navigation)
             ══════════════════════════════════ */}
         {(stats.outOfStock > 0 || stats.lowStock > 0) && (
           <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
@@ -530,11 +537,14 @@ function SellerShopPage() {
                          4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-red-800">
-                    {stats.outOfStock} out of stock
-                  </p>
-                  <p className="text-[10px] text-red-600">Restock soon</p>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-800">{stats.outOfStock} product(s) out of stock</p>
+                  <p className="text-xs text-red-600">Restock soon to avoid lost sales</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button onClick={() => navigate('/seller/products?stock=out')}
+                      className="text-sm rounded-lg px-3 py-1 bg-white border border-border text-text hover:bg-gray-50">View out-of-stock</button>
+                    <button onClick={() => setHideOutOfStockOnDashboard(false)} className="text-sm rounded-lg px-3 py-1 bg-primary text-white">Show on dashboard</button>
+                  </div>
                 </div>
               </div>
             )}
@@ -547,14 +557,66 @@ function SellerShopPage() {
                       d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-amber-800">
-                    {stats.lowStock} running low
-                  </p>
-                  <p className="text-[10px] text-amber-600">Below 5 units</p>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-amber-800">{stats.lowStock} product(s) running low</p>
+                  <p className="text-xs text-amber-600">Below 5 units</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button onClick={() => navigate('/seller/products?stock=low')}
+                      className="text-sm rounded-lg px-3 py-1 bg-white border border-border text-text hover:bg-gray-50">View low-stock</button>
+                    <button onClick={() => setHideOutOfStockOnDashboard(false)} className="text-sm rounded-lg px-3 py-1 bg-primary text-white">Show low stock</button>
+                  </div>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Seller analytics (compact) ── */}
+        {analyticsSeries.length > 0 && (
+          <div className="mb-4 rounded-2xl border border-border bg-white p-4">
+              <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-text">Sales (30d)</h3>
+                <p className="text-xs text-muted-text">Recent orders and revenue</p>
+              </div>
+              <div className="text-sm font-medium text-text">{formatPrice(analyticsSeries.reduce((s, a) => s + a.amount, 0))}</div>
+            </div>
+            <div className="mt-3 flex items-end gap-2 h-16">
+              {analyticsSeries.map((pt) => (
+                <div key={pt.label} className="flex-1 flex flex-col items-center">
+                  <div className="w-full rounded-t-xl bg-secondary/80" style={{ height: `${Math.max((pt.amount / (Math.max(...analyticsSeries.map(x => x.amount), 1))) * 100, 4)}%` }} />
+                  <div className="text-[10px] text-muted-text mt-1">{pt.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Compact top-selling preview ── */}
+        {topSelling.length > 0 && (
+          <div className="mb-4 rounded-2xl border border-border bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-text">Top products</h3>
+              <button onClick={() => navigate('/seller/products')} className="text-sm text-secondary hover:underline">Manage</button>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {topSelling.slice(0,6).map(p => {
+                const resolved: any = products.find(x => x.id === p.id) || p || {}
+                const img = resolved.images?.[0]
+                const name = resolved.name || p.name || 'Untitled'
+                const stock = typeof resolved.stock === 'number' ? resolved.stock : (p.stock ?? 0)
+                const price = resolved.salePrice ?? resolved.price ?? p.price
+                return (
+                  <div key={p.id} className="text-center text-xs">
+                    <div className="w-16 h-16 rounded-md bg-gray-50 overflow-hidden mx-auto">
+                      {img ? <img src={img} alt={name} className="w-full h-full object-cover" /> : <div className="text-muted-text py-6">No image</div>}
+                    </div>
+                    <div className="mt-1 truncate w-16 mx-auto">{name}</div>
+                    <div className="text-[11px] text-muted-text">{stock <= 0 ? 'Out' : `${stock}`}</div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -613,10 +675,16 @@ function SellerShopPage() {
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-text">Your Products</h2>
                 <p className="text-xs text-muted-text mt-0.5">
-                  {filteredProducts.length} of {stats.total} product{stats.total !== 1 ? 's' : ''}
+                  {dashboardVisibleProducts.length} of {stats.total} product{stats.total !== 1 ? 's' : ''}
                 </p>
               </div>
-              <ViewToggle view={view} onChange={setView} />
+              <div className="flex items-center gap-3">
+                <label className="inline-flex items-center text-xs text-muted-text gap-2">
+                  <input type="checkbox" checked={hideOutOfStockOnDashboard} onChange={(e) => setHideOutOfStockOnDashboard(e.target.checked)} className="w-4 h-4" />
+                  Hide out-of-stock
+                </label>
+                <ViewToggle view={view} onChange={setView} />
+              </div>
             </div>
 
             {/* ── Search bar ── */}
@@ -726,8 +794,23 @@ function SellerShopPage() {
               </div>
             )}
 
-            {/* ── Loading Skeleton ── */}
-            {loading ? (
+            {/* Dashboard product list hidden? show CTA if true */}
+        {hideProductListOnDashboard ? (
+          <div className="rounded-2xl border border-border bg-white p-6 mb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-text">Manage products</h3>
+                <p className="text-sm text-muted-text">Products are managed on your products page — open the manager to edit, filter, and bulk update listings.</p>
+              </div>
+              <div className="flex gap-3">
+                <Link to="/seller/products" className="px-4 py-2 rounded-xl bg-primary text-white text-sm">Manage products</Link>
+                <button onClick={() => setShowProductForm(true)} className="px-4 py-2 rounded-xl border border-border text-sm">Add product</button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ── Loading Skeleton ── */
+          loading ? (
               view === 'grid' ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
                   {[...Array(6)].map((_, i) => (
@@ -814,7 +897,7 @@ function SellerShopPage() {
                 {view === 'grid' ? (
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3
                                   gap-2.5 sm:gap-4">
-                    {filteredProducts.map(product => (
+                    {dashboardVisibleProducts.map(product => (
                       <SellerProductCard
                         key={product.id}
                         product={product}
@@ -825,7 +908,7 @@ function SellerShopPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {filteredProducts.map(product => (
+                    {dashboardVisibleProducts.map(product => (
                       <ProductListItem
                         key={product.id}
                         product={product}
@@ -835,13 +918,13 @@ function SellerShopPage() {
                   </div>
                 )}
                 <p className="text-center text-xs text-muted-text mt-5">
-                  Showing {filteredProducts.length} of {stats.total} products
+                  Showing {dashboardVisibleProducts.length} of {stats.total} products
                 </p>
               </>
-            )}
-          </div>
-        </div>
+        )}
       </div>
+    </div>
+  </div>
 
       {/* ── Product Form Modal ── */}
       <ProductForm
