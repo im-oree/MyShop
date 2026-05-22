@@ -42,7 +42,7 @@ function LoginPage() {
             to="/"
             className="inline-block text-3xl font-bold text-primary hover:opacity-80 transition-opacity duration-200"
           >
-            eShop
+            MyShop
           </Link>
           <h1 className="mt-3 text-2xl font-bold text-text tracking-tight">
             Welcome back

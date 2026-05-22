@@ -69,7 +69,7 @@ function Footer() {
             <div className="col-span-2 sm:col-span-1 mb-4 sm:mb-0">
               <Link to="/" className="inline-block group">
                 <h3 className="text-2xl font-bold tracking-tight group-hover:text-green-300 transition-base">
-                  eShop
+                  MyShop
                 </h3>
               </Link>
               <p className="mt-3 text-sm leading-relaxed text-gray-300 max-w-xs">
@@ -119,7 +119,7 @@ function Footer() {
           {/* Divider */}
           <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-gray-400 text-center sm:text-left">
-              © {new Date().getFullYear()} eShop. All rights reserved.
+              © {new Date().getFullYear()} MyShop. All rights reserved.
             </p>
             <p className="text-xs text-gray-500">
               Built with ❤️ for great shopping

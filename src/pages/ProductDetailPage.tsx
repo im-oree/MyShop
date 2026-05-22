@@ -615,14 +615,14 @@ function ProductDetailPage() {
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center
                               justify-center overflow-hidden shrink-0">
                 <img
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.sellerName || 'eShop'}&backgroundColor=dbeafe&textColor=1e40af`}
-                  alt={product.sellerName || 'eShop Official'}
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.sellerName || 'MyShop'}&backgroundColor=dbeafe&textColor=1e40af`}
+                  alt={product.sellerName || 'MyShop Official'}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-text truncate">
-                  {product.sellerName || 'eShop Official'}
+                  {product.sellerName || 'MyShop Official'}
                 </p>
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 text-xs text-muted-text">
@@ -881,7 +881,7 @@ function ProductDetailPage() {
                     <h3 className="text-text font-semibold text-base mt-6">Specifications</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {Object.entries(product.specs || {
-                        'Brand': product.sellerName || 'eShop',
+                        'Brand': product.sellerName || 'MyShop',
                         'Category': product.category,
                         'SKU': product.id.slice(0, 8).toUpperCase(),
                         'Weight': '0.5 kg',

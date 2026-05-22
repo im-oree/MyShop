@@ -4,21 +4,13 @@ export interface User {
   email: string
   name: string
   phone?: string
-  role: 'user' | 'seller' | 'admin' | 'moderator' | 'employee'
-  sellerProfile?: {
-    shopName: string
-    shopDescription: string
-    rating: number
-    totalReviews: number
-    followers: number
-  }
-  appliedAsSeller?: boolean
-  sellerApproved?: boolean
+  role: 'user' | 'admin' | 'manager' | 'employee'
   createdAt: Date
   updatedAt: Date
   addresses?: Address[]
   fcmTokens?: string[]
-  employeeOfSellerId?: string
+  // Employee fields (optional - for staff management)
+  managedByUserId?: string // admin who manages this employee
   employeeTitle?: string
   employeeRoleTemplate?: EmployeeRoleTemplate
   employeePermissions?: EmployeePermissions
@@ -54,8 +46,6 @@ export interface Address {
 export interface Product {
   id: string
   name: string
-  sellerName?: string
-  sellerId?: string
   description: string
   price: number // stored in kobo
   currency: Currency
@@ -129,7 +119,7 @@ export interface OrderItem {
 
 export type NotificationPriority = 'low' | 'normal' | 'important'
 
-export type NotificationType = 'order_created' | 'payment_confirmed' | 'order_status_updated' | 'seller_order_received' | 'general'
+export type NotificationType = 'order_created' | 'payment_confirmed' | 'order_status_updated' | 'order_ready' | 'general'
 
 export interface Notification {
   id: string
@@ -149,7 +139,6 @@ export interface Conversation {
   id: string
   participants: string[]
   participantMeta?: Array<{ userId: string; name: string; role: string }>
-  sellerId?: string
   contextType: 'general' | 'product' | 'order'
   contextId?: string
   lastMessage?: string
@@ -164,6 +153,32 @@ export interface Message {
   conversationId: string
   senderId: string
   body: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+// Business Config Type
+export interface BusinessConfig {
+  id: string // fixed id: 'config'
+  ownerName: string
+  ownerEmail: string
+  businessName: string
+  businessLogo?: string
+  businessDescription: string
+  businessPhone: string
+  businessAddress: string
+  businessWebsite?: string
+  socialLinks?: Record<string, string> // { instagram: url, twitter: url, etc }
+  colors?: {
+    primary: string
+    secondary: string
+    accent: string
+  }
+  features?: {
+    showAboutPage: boolean
+    showContactPage: boolean
+    enableNotifications: boolean
+  }
   createdAt: Date
   updatedAt: Date
 }

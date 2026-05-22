@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
-import { Repeat, ShoppingCart, Bell } from 'lucide-react'
+import { ShoppingCart, Bell } from 'lucide-react'
 import { notificationService } from '@/services/notificationService'
 
 export default function Header(): JSX.Element {
-  const { isAuthenticated, user, currentRole, logout, switchRole } = useAuthStore()
+  const { isAuthenticated, user, logout } = useAuthStore()
   const cartItems = useCartStore((s) => s.items)
   const location = useLocation()
-  const navigate = useNavigate()
 
   const [scrolled, setScrolled] = useState(false)
   const [cartAnimating, setCartAnimating] = useState(false)
@@ -57,26 +56,8 @@ export default function Header(): JSX.Element {
     }
   }, [isAuthenticated])
 
-  const getLogoLink = () => {
-    if (currentRole === 'seller') {
-      return '/seller/shop'
-    }
-    return '/'
-  }
-
   const getNavLinks = () => {
-    if (currentRole === 'seller') {
-      return [
-        { to: '/seller/shop', label: 'Dashboard' },
-        { to: '/seller/products', label: 'Products' },
-        { to: '/seller/orders', label: 'Orders' },
-        { to: '/messages', label: 'Messages' },
-        { to: '/access-management', label: 'Access' },
-        { to: '/seller/analytics', label: 'Analytics' },
-        { to: '/profile', label: 'Profile' },
-      ]
-    }
-    if (currentRole === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'manager') {
       return [
         { to: '/', label: 'Home' },
         { to: '/products', label: 'Products' },
@@ -95,13 +76,6 @@ export default function Header(): JSX.Element {
   }
 
   const navLinks = getNavLinks()
-  const canSwitchRole = isAuthenticated && user?.role === 'seller'
-
-  const handleRoleToggle = () => {
-    const newRole = currentRole === 'seller' ? 'user' : 'seller'
-    switchRole(newRole as 'user' | 'seller')
-    navigate(newRole === 'seller' ? '/seller/shop' : '/')
-  }
 
   return (
     <header
@@ -111,8 +85,8 @@ export default function Header(): JSX.Element {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 sm:h-[72px]">
-          <Link to={getLogoLink()} className="text-xl sm:text-2xl font-bold text-primary">
-            eShop
+          <Link to="/" className="text-xl sm:text-2xl font-bold text-primary">
+            MyShop
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1 flex-1 ml-10">
@@ -131,7 +105,7 @@ export default function Header(): JSX.Element {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {currentRole !== 'seller' && (
+            {isAuthenticated && user?.role === 'user' && (
               <Link to="/cart" className={`relative p-2.5 rounded-lg hover:bg-gray-100 ${isActive('/cart') ? 'bg-gray-100' : ''}`} aria-label={`Cart with ${cartItems.length} items`}>
                 <ShoppingCart className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-700 ${cartAnimating ? 'animate-cart-bounce' : ''}`} strokeWidth={1.75} />
                 {cartItems.length > 0 && (
@@ -160,25 +134,6 @@ export default function Header(): JSX.Element {
             <div className="hidden sm:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
-                  {canSwitchRole && (
-                    <button
-                      onClick={handleRoleToggle}
-                      role="switch"
-                      aria-checked={currentRole === 'seller'}
-                      className="flex items-center gap-3"
-                      title={`Switch to ${currentRole === 'seller' ? 'buyer' : 'seller'}`}
-                    >
-                      <div className="relative w-14 h-7 p-1 rounded-full bg-gray-100 flex items-center cursor-pointer" aria-hidden>
-                        <div
-                          className={`absolute left-1 w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${
-                            currentRole === 'seller' ? 'translate-x-6' : 'translate-x-0'
-                          }`}
-                        />
-                      </div>
-                      <span className="text-sm capitalize">{currentRole === 'seller' ? 'Seller' : 'Buyer'}</span>
-                    </button>
-                  )}
-
                   <Link to="/profile" className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-1.5 hover:border-primary/30 hover:shadow-sm transition-all">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <span className="text-sm font-semibold text-primary">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
@@ -194,20 +149,6 @@ export default function Header(): JSX.Element {
                 </>
               )}
             </div>
-
-            {isAuthenticated && canSwitchRole && (
-              <button
-                onClick={handleRoleToggle}
-                className="sm:hidden flex items-center gap-2 px-3 py-2 rounded-xl border border-primary/25 bg-primary/5 text-primary active:scale-[0.98] transition-all"
-                title={`Switch to ${currentRole === 'seller' ? 'buyer' : 'seller'}`}
-                aria-pressed={currentRole === 'seller'}
-              >
-                <Repeat className="w-4 h-4" strokeWidth={2.25} />
-                <span className="text-xs font-semibold tracking-wide uppercase">
-                  {currentRole === 'seller' ? 'Seller' : 'Buyer'}
-                </span>
-              </button>
-            )}
 
           </div>
         </div>

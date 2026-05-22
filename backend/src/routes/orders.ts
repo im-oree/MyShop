@@ -13,7 +13,7 @@ async function getSellerContext(req: Request, required: 'read' | 'write' = 'read
   const actor = await userService.getById(req.userId)
   if (!actor) return null
 
-  if (actor.role === 'admin' || actor.role === 'seller') {
+  if (actor.role === 'admin' || actor.role === 'manager') {
     return { actor, sellerId: actor.id }
   }
 
@@ -22,8 +22,8 @@ async function getSellerContext(req: Request, required: 'read' | 'write' = 'read
     if (!hasAccess(permissions.orders, required)) {
       return null
     }
-    if (!actor.employeeOfSellerId) return null
-    return { actor, sellerId: actor.employeeOfSellerId }
+    if (!actor.managedByUserId) return null
+    return { actor, sellerId: actor.managedByUserId }
   }
 
   return null

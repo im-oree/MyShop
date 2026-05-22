@@ -5,14 +5,14 @@ interface AuthStore {
   user: User | null
   isAuthenticated: boolean
   loading: boolean
-  currentRole: 'user' | 'seller' | 'admin' | 'moderator' | 'employee' | null
+  currentRole: 'user' | 'admin' | 'manager' | 'employee' | null
   token: string | null
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
   restoreSession: (user: User, token: string) => void
   logout: () => void
-  switchRole: (role: 'user' | 'seller') => void
-  resetRole: () => void
+  isAdmin: () => boolean
+  isManager: () => boolean
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -62,14 +62,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     localStorage.removeItem('authToken')
   },
 
-  switchRole: (role: 'user' | 'seller') => {
+  isAdmin: () => {
     const { user } = get()
-    if (role === 'seller' && user?.role !== 'seller') return
-    set({ currentRole: role })
+    return user?.role === 'admin'
   },
 
-  resetRole: () => {
+  isManager: () => {
     const { user } = get()
-    set({ currentRole: user?.role || null })
+    return user?.role === 'manager' || user?.role === 'admin'
   },
 }))

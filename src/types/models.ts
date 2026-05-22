@@ -21,17 +21,7 @@ export interface User {
   email: string
   name: string
   phone?: string
-  role: 'user' | 'seller' | 'admin' | 'moderator' | 'employee' // role-based access for customers and staff
-  sellerProfile?: {
-    shopName: string
-    shopDescription: string
-    rating: number
-    totalReviews: number
-    followers: number
-  }
-  appliedAsSeller?: boolean
-  sellerApproved?: boolean
-  employeeOfSellerId?: string
+  role: 'user' | 'admin' | 'manager' | 'employee' // role-based access for customers and staff
   employeeTitle?: string
   employeeRoleTemplate?: EmployeeRoleTemplate
   employeePermissions?: EmployeePermissions
@@ -56,8 +46,6 @@ export interface Address {
 export interface Product {
   id: string
   name: string
-  sellerName?: string
-  sellerId?: string
   description: string
   price: number
   currency: string
@@ -104,7 +92,7 @@ export interface OrderItem {
 
 export type NotificationPriority = 'low' | 'normal' | 'important'
 
-export type NotificationType = 'order_created' | 'payment_confirmed' | 'order_status_updated' | 'seller_order_received' | 'general'
+export type NotificationType = 'order_created' | 'payment_confirmed' | 'order_status_updated' | 'order_ready' | 'general'
 
 export interface NotificationItem {
   id: string
@@ -116,6 +104,31 @@ export interface NotificationItem {
   link?: string
   metadata?: Record<string, unknown>
   readAt?: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface BusinessConfig {
+  id: string
+  ownerName: string
+  ownerEmail: string
+  businessName: string
+  businessLogo?: string
+  businessDescription: string
+  businessPhone: string
+  businessAddress: string
+  businessWebsite?: string
+  socialLinks?: Record<string, string>
+  colors?: {
+    primary: string
+    secondary: string
+    accent: string
+  }
+  features?: {
+    showAboutPage: boolean
+    showContactPage: boolean
+    enableNotifications: boolean
+  }
   createdAt: Date
   updatedAt: Date
 }

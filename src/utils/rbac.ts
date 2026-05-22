@@ -47,7 +47,7 @@ export function getEffectivePermissions(user?: User | null): EmployeePermissions
     }
   }
 
-  if (user.role === 'seller' || user.role === 'admin') {
+  if (user.role === 'admin' || user.role === 'manager') {
     return {
       products: 'write',
       orders: 'write',

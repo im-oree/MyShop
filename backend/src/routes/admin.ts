@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express'
 import { authenticate, requireAdmin } from '../middlewares/index.js'
 import { sendSuccess, sendError } from '../utils/response.js'
-import { orderService, userService, productService } from '../services/index.js'
-import { OrderStatus, PaymentStatus, User } from '../types/index.js'
+import { orderService, userService, productService, businessConfigService } from '../services/index.js'
+import { OrderStatus, PaymentStatus, User, BusinessConfig } from '../types/index.js'
 
 const router = Router()
 
@@ -35,7 +35,7 @@ function bucketKey(date: Date, range: 'today' | 'week' | 'month'): string {
 
 /**
  * GET /api/admin/overview
- * Dashboard summary for users, revenue, and seller verification.
+ * Dashboard summary for revenue, users, and products.
  */
 router.get('/overview', authenticate, requireAdmin, async (_req: Request, res: Response) => {
   try {
@@ -48,8 +48,6 @@ router.get('/overview', authenticate, requireAdmin, async (_req: Request, res: R
 
     const totalUsers = allUsers.length
     const activeUsers = allUsers.filter(isActiveUser).length
-    const sellerCount = allUsers.filter(user => user.role === 'seller').length
-    const pendingSellerApplications = allUsers.filter(user => user.appliedAsSeller && user.sellerApproved !== true && user.role !== 'seller')
 
     const now = new Date()
     const dayStart = new Date(now)
@@ -92,7 +90,6 @@ router.get('/overview', authenticate, requireAdmin, async (_req: Request, res: R
       users: {
         totalUsers,
         activeUsers,
-        sellerCount,
         users: allUsers,
       },
       revenue: {
@@ -104,10 +101,6 @@ router.get('/overview', authenticate, requireAdmin, async (_req: Request, res: R
       },
       products: {
         totalProducts,
-      },
-      sellerVerification: {
-        pending: pendingSellerApplications,
-        approved: sellerCount,
       },
     }, 'Admin overview fetched')
   } catch (error) {
@@ -190,6 +183,61 @@ router.get('/revenue', authenticate, requireAdmin, async (req: Request, res: Res
   } catch (error) {
     console.error('Admin revenue error:', error)
     sendError(res, String(error), 500, 'Failed to fetch revenue')
+  }
+})
+
+/**
+ * GET /api/admin/config
+ * Get business configuration.
+ */
+router.get('/config', authenticate, requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const config = await businessConfigService.getConfig()
+    if (!config) {
+      sendSuccess(res, null, 'No business configuration found', 404)
+      return
+    }
+    sendSuccess(res, config, 'Business config fetched')
+  } catch (error) {
+    console.error('Admin config fetch error:', error)
+    sendError(res, String(error), 500, 'Failed to fetch business config')
+  }
+})
+
+/**
+ * POST /api/admin/config
+ * Create or update business configuration.
+ */
+router.post('/config', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const data = req.body as Omit<BusinessConfig, 'id' | 'createdAt' | 'updatedAt'>
+    
+    // Validate required fields
+    if (!data.businessName || !data.ownerName || !data.ownerEmail) {
+      sendError(res, 'businessName, ownerName, and ownerEmail are required', 400)
+      return
+    }
+    
+    const config = await businessConfigService.upsertConfig(data)
+    sendSuccess(res, config, 'Business config updated', 201)
+  } catch (error) {
+    console.error('Admin config update error:', error)
+    sendError(res, String(error), 500, 'Failed to update business config')
+  }
+})
+
+/**
+ * PATCH /api/admin/config
+ * Partially update business configuration.
+ */
+router.patch('/config', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const data = req.body as Partial<Omit<BusinessConfig, 'id' | 'createdAt' | 'updatedAt'>>
+    const config = await businessConfigService.updateConfig(data)
+    sendSuccess(res, config, 'Business config patched')
+  } catch (error) {
+    console.error('Admin config patch error:', error)
+    sendError(res, String(error), 500, 'Failed to patch business config')
   }
 })
 

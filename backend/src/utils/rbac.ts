@@ -83,7 +83,7 @@ export function hasAccess(level: AccessLevel, required: 'read' | 'write'): boole
 }
 
 export function getEffectivePermissions(user: User): EmployeePermissions {
-  if (user.role === 'seller' || user.role === 'admin') {
+  if (user.role === 'admin' || user.role === 'manager') {
     return {
       products: 'write',
       orders: 'write',

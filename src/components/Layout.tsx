@@ -10,6 +10,7 @@ function Layout() {
   const { pathname } = useLocation()
   const { loading, restoreSession, setUser, isAuthenticated } = useAuthStore()
   const { loadCart } = useCartStore()
+  const isMessagesRoute = pathname === '/messages' || pathname === '/seller/messages'
 
   // Restore session on app mount
   useEffect(() => {
@@ -59,11 +60,11 @@ function Layout() {
 
   return (
     <div className="flex flex-col min-h-screen min-h-[100dvh] bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-6 sm:py-8 pb-24 md:pb-8 animate-fade-in">
+      {!isMessagesRoute && <Header />}
+      <main className={`flex-1 container mx-auto px-4 py-6 sm:py-8 animate-fade-in ${isMessagesRoute ? 'pb-6 sm:pb-8' : 'pb-24 md:pb-8'}`}>
         <Outlet />
       </main>
-      <Footer />
+      {!isMessagesRoute && <Footer />}
     </div>
   )
 }

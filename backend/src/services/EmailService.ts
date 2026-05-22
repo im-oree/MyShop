@@ -5,7 +5,7 @@ export class EmailService {
   private brevoApiKey = process.env.BREVO_API_KEY
   private brevoApiUrl = 'https://api.brevo.com/v3/smtp/email'
   private senderEmail = process.env.SENDER_EMAIL || 'noreply@battershop.com'
-  private senderName = process.env.SENDER_NAME || 'eShop'
+  private senderName = process.env.SENDER_NAME || 'MyShop'
 
   /**
    * Send order confirmation to buyer
@@ -37,7 +37,7 @@ export class EmailService {
         <p>Phone: ${order.shippingAddress.phone}</p>
         ${order.shippingAddress.whatsapp ? `<p>WhatsApp: ${order.shippingAddress.whatsapp}</p>` : ''}
         <p>We will contact you soon with shipping details.</p>
-        <p>Best regards,<br/>eShop Team</p>
+        <p>Best regards,<br/>MyShop Team</p>
       `
 
       await axios.post(
@@ -108,7 +108,7 @@ export class EmailService {
         <p>${order.shippingAddress.street}</p>
         <p>${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}</p>
         <p>Please prepare and ship the items as soon as possible. You will receive payment once the order is delivered.</p>
-        <p>Best regards,<br/>eShop Team</p>
+        <p>Best regards,<br/>MyShop Team</p>
       `
 
       await axios.post(
@@ -157,7 +157,7 @@ export class EmailService {
         <p><strong>Amount Paid:</strong> ₦${(orderData.totalAmount / 100).toFixed(2)}</p>
         <p>Your order will be processed and you will receive tracking information soon.</p>
         <p>Thank you for shopping with us!</p>
-        <p>Best regards,<br/>eShop Team</p>
+        <p>Best regards,<br/>MyShop Team</p>
       `
 
       await axios.post(

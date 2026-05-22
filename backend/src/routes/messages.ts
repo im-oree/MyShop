@@ -11,7 +11,7 @@ const router = Router()
 async function canWriteMessages(userId: string): Promise<boolean> {
   const user = await userService.getById(userId)
   if (!user) return false
-  if (user.role === 'user' || user.role === 'seller' || user.role === 'admin') return true
+  if (user.role === 'user' || user.role === 'admin' || user.role === 'manager') return true
   if (user.role === 'employee') {
     const permissions = getEffectivePermissions(user)
     return hasAccess(permissions.messages, 'write')
@@ -22,12 +22,21 @@ async function canWriteMessages(userId: string): Promise<boolean> {
 async function canReadMessages(userId: string): Promise<boolean> {
   const user = await userService.getById(userId)
   if (!user) return false
-  if (user.role === 'user' || user.role === 'seller' || user.role === 'admin') return true
+  if (user.role === 'user' || user.role === 'admin' || user.role === 'manager') return true
   if (user.role === 'employee') {
     const permissions = getEffectivePermissions(user)
     return hasAccess(permissions.messages, 'read')
   }
   return false
+}
+
+/**
+ * Get the business admin user for routing messages about products/orders
+ */
+async function getAdminUser(): Promise<string | null> {
+  const { users } = await userService.getAll(1, 1000)
+  const admin = users.find(u => u.role === 'admin' || u.role === 'manager')
+  return admin?.id || null
 }
 
 router.post('/conversations/start', authenticate, async (req: Request, res: Response) => {
@@ -48,18 +57,22 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
     let resolvedTargetUserId = targetUserId
     let contextType: 'general' | 'product' | 'order' = 'general'
     let contextId: string | undefined
-    let sellerId: string | undefined
 
     if (!resolvedTargetUserId && productId) {
       const product = await productService.getById(productId)
-      if (!product?.sellerId) {
-        sendError(res, 'Product seller not found', 404)
+      if (!product) {
+        sendError(res, 'Product not found', 404)
         return
       }
-      resolvedTargetUserId = product.sellerId
+      // Route to admin for product-related messages
+      const admin = await getAdminUser()
+      if (!admin) {
+        sendError(res, 'Admin user not found', 500)
+        return
+      }
+      resolvedTargetUserId = admin
       contextType = 'product'
       contextId = productId
-      sellerId = product.sellerId
     }
 
     if (!resolvedTargetUserId && orderId) {
@@ -68,15 +81,15 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
         sendError(res, 'Order not found', 404)
         return
       }
-      const product = await productService.getById(order.items[0].productId)
-      if (!product?.sellerId) {
-        sendError(res, 'Order seller not found', 404)
+      // Route to admin for order-related messages
+      const admin = await getAdminUser()
+      if (!admin) {
+        sendError(res, 'Admin user not found', 500)
         return
       }
-      resolvedTargetUserId = product.sellerId
+      resolvedTargetUserId = admin
       contextType = 'order'
       contextId = orderId
-      sellerId = product.sellerId
     }
 
     if (!resolvedTargetUserId) {
@@ -114,9 +127,8 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
       participants,
       participantMeta: [
         { userId: actorId, name: actor?.name || 'User', role: actor?.role || 'user' },
-        { userId: resolvedTargetUserId, name: target?.name || 'User', role: target?.role || 'user' },
+        { userId: resolvedTargetUserId, name: target?.name || 'User', role: target?.role || 'admin' },
       ],
-      sellerId: sellerId || (target?.role === 'seller' ? target.id : undefined),
       contextType,
       contextId: contextId || null,
       lastMessage: '',

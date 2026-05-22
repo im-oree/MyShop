@@ -6,14 +6,14 @@ import { EMPLOYEE_ROLE_TEMPLATES, normalizePermissions, resolveTemplatePermissio
 
 const router = Router()
 
-async function requireSellerOwner(req: Request, res: Response) {
+async function requireAdmin(req: Request, res: Response) {
   if (!req.userId) {
     sendError(res, 'Unauthorized', 401)
     return null
   }
   const actor = await userService.getById(req.userId)
-  if (!actor || actor.role !== 'seller') {
-    sendError(res, 'Only seller owners can manage employees', 403)
+  if (!actor || (actor.role !== 'admin' && actor.role !== 'manager')) {
+    sendError(res, 'Only admin/managers can manage employees', 403)
     return null
   }
   return actor
@@ -31,23 +31,23 @@ router.get('/employees', authenticate, async (req: Request, res: Response) => {
       return
     }
 
-    const sellerId = actor.role === 'seller' ? actor.id : actor.employeeOfSellerId
-    if (!sellerId) {
-      sendError(res, 'Only seller owners or employees can view this list', 403)
+    const adminId = actor.role === 'admin' || actor.role === 'manager' ? actor.id : actor.managedByUserId
+    if (!adminId) {
+      sendError(res, 'Only admin/managers or employees can view this list', 403)
       return
     }
 
-    const employees = await userService.getEmployeesBySellerId(sellerId)
+    const employees = await userService.getEmployeesByAdminId(adminId)
     sendSuccess(res, employees, 'Employees fetched')
   } catch (error) {
     console.error('Get employees error:', error)
     sendError(res, String(error), 500, 'Failed to fetch employees')
   }
-})
+}))
 
 router.post('/employees', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireSellerOwner(req, res)
+    const owner = await requireAdmin(req, res)
     if (!owner) return
 
     const { email, title, template, permissions } = req.body

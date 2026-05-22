@@ -45,7 +45,6 @@ export class ProductService {
     category?: string
     featured?: boolean
     search?: string
-    sellerId?: string
   }): Promise<{ products: Product[]; total: number }> {
     let query = this.db.collection(this.collection)
     
@@ -55,10 +54,6 @@ export class ProductService {
     
     if (filters?.featured === true) {
       query = (query as any).where('featured', '==', true)
-    }
-
-    if (filters?.sellerId) {
-      query = (query as any).where('sellerId', '==', filters.sellerId)
     }
     
     const total = (await query.count().get()).data().count
@@ -166,20 +161,11 @@ export class ProductService {
   }
 
   /**
-   * Get products by seller ID
+   * Get products by seller ID (deprecated - keeping for backward compatibility)
+   * @deprecated Use getAll() instead - all products belong to single owner
    */
-  async getBySellerId(sellerId: string): Promise<Product[]> {
-    try {
-      const snapshot = await this.db
-        .collection(this.collection)
-        .where('sellerId', '==', sellerId)
-        .get()
-
-      return snapshot.docs.map(doc => doc.data() as Product)
-    } catch (error) {
-      console.error(`Error getting products for seller ${sellerId}:`, error)
-      return []
-    }
+  async getBySellerId(_sellerId: string): Promise<Product[]> {
+    return this.getAll(1, Infinity).then(result => result.products)
   }
 }
 

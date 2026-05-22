@@ -98,7 +98,7 @@ function HomePage() {
       <div className="mb-8 sm:mb-10">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text tracking-tight">
           Welcome to{' '}
-          <span className="text-secondary">eShop</span>
+          <span className="text-secondary">MyShop</span>
         </h1>
         <p className="mt-2 text-muted-text text-sm sm:text-base max-w-lg">
           Browse our curated collection of quality products at unbeatable prices

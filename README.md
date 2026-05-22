@@ -1,4 +1,4 @@
-# eShop - Production Ready E-Commerce Platform
+# MyShop - Production Ready E-Commerce Platform
 
 A modern, scalable, and secure e-commerce platform built with Vite + React + TypeScript on the frontend and Express + Node.js on the backend, with Firebase for authentication and Firestore for data.
 
