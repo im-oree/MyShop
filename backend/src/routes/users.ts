@@ -96,7 +96,7 @@ router.post('/employees', authenticate, async (req: Request, res: Response) => {
 
 router.patch('/employees/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireSellerOwner(req, res)
+    const owner = await requireAdmin(req, res)
     if (!owner) return
 
     const { title, template, permissions } = req.body
@@ -120,7 +120,7 @@ router.patch('/employees/:id', authenticate, async (req: Request, res: Response)
 
 router.delete('/employees/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireSellerOwner(req, res)
+    const owner = await requireAdmin(req, res)
     if (!owner) return
 
     const removed = await userService.removeEmployee(owner.id, req.params.id)
