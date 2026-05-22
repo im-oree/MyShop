@@ -36,13 +36,6 @@ function HomePage() {
     }
   }, [])
 
-  // Redirect sellers to dashboard
-  useEffect(() => {
-    if (currentRole === 'seller') {
-      navigate('/seller/shop', { replace: true })
-    }
-  }, [currentRole, navigate])
-
   useEffect(() => {
     mountedRef.current = true
     void loadProducts(true)
