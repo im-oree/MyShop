@@ -1,9 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { authenticate, requireAdmin } from '../middlewares/index.js'
-import { auditLogService } from '../services/index.js'
 import { sendSuccess, sendError } from '../utils/response.js'
-import { orderService, userService, productService, businessConfigService } from '../services/index.js'
-import { auditLogService } from '../services/index.js'
+import { orderService, userService, productService, businessConfigService, auditLogService } from '../services/index.js'
 import { OrderStatus, PaymentStatus, User, BusinessConfig } from '../types/index.js'
 
 const router = Router()

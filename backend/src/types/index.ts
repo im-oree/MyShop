@@ -1,8 +1,10 @@
 // User Types
 export interface User {
   id: string
-  email: string
+  email?: string
   name: string
+  invited?: boolean
+  inviteToken?: string
   phone?: string
   role: 'user' | 'admin' | 'manager' | 'employee'
   sellerProfile?: {

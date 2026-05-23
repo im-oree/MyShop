@@ -11,6 +11,7 @@
     "seed:products": "tsx src/scripts/seedProducts.ts"
   },
   "dependencies": {
+    "serverless-http": "*",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.0",
     "cors": "^2.8.0",
