@@ -1,6 +1,23 @@
 import axios, { AxiosInstance } from 'axios'
 
-const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+function normalizeApiBaseUrl(value: string | undefined): string {
+  if (!value || !value.trim()) {
+    return '/api'
+  }
+
+  const trimmed = value.trim()
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '')
+
+  if (withoutTrailingSlash === '' || withoutTrailingSlash === '/') {
+    return '/api'
+  }
+
+  return withoutTrailingSlash.endsWith('/api')
+    ? withoutTrailingSlash
+    : `${withoutTrailingSlash}/api`
+}
+
+const apiUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: apiUrl,
