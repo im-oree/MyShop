@@ -76,17 +76,17 @@ export class App {
   }
   
   private setupRoutes(): void {
-    // Health check
-    this.app.get('/health', (_req: Request, res: Response) => {
+    // API routes prefix
+    const apiRouter = express.Router()
+    
+    // Health check (under /api)
+    apiRouter.get('/health', (_req: Request, res: Response) => {
       res.json({
         status: 'ok',
         environment: config.env,
         timestamp: new Date().toISOString(),
       })
     })
-    
-    // API routes prefix
-    const apiRouter = express.Router()
     
     // Register routes
     apiRouter.use('/auth', authRoutes)
