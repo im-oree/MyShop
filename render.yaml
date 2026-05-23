@@ -2,13 +2,9 @@ services:
   - type: web
     name: frontend
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm run preview
     rootDir: .
-    envVars:
-      - key: VITE_API_BASE_URL
-        scope: build
-        value: https://${RENDER_EXTERNAL_HOSTNAME}/backend
     
   - type: web
     name: backend
