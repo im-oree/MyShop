@@ -13,9 +13,6 @@
   "dependencies": {
     "serverless-http": "*",
     "axios": "^1.6.0",
-    "@types/express": "*",
-    "@types/cors": "*",
-    "@types/bcryptjs": "*",
     "bcryptjs": "^2.4.0",
     "cors": "^2.8.0",
     "dotenv": "^16.3.0",

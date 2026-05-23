@@ -42,7 +42,7 @@ export class App {
     
     // CORS
     this.app.use(cors({
-      origin: (origin, callback) => {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         if (!origin) {
           callback(null, true)
           return
@@ -104,7 +104,7 @@ export class App {
     this.app.use('/api', apiRouter)
     
     // 404 handler
-    this.app.use((req, res) => {
+    this.app.use((req: Request, res: Response) => {
       res.status(404).json({
         success: false,
         message: 'Not found',
