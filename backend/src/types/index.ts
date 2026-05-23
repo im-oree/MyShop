@@ -5,6 +5,15 @@ export interface User {
   name: string
   phone?: string
   role: 'user' | 'admin' | 'manager' | 'employee'
+  sellerProfile?: {
+    shopName: string
+    shopDescription: string
+    rating: number
+    totalReviews: number
+    followers: number
+  }
+  appliedAsSeller?: boolean
+  sellerApproved?: boolean
   createdAt: Date
   updatedAt: Date
   addresses?: Address[]
@@ -47,19 +56,41 @@ export interface Product {
   id: string
   name: string
   description: string
+  productType?: ProductType
   price: number // stored in kobo
   currency: Currency
   images: string[]
   category: string
   tags: string[]
   stock: number
+  ownerId?: string
+  sellerName?: string
+  sellerId?: string
   discount?: number // percentage
   salePrice?: number // stored in kobo
   featured: boolean
   features?: string[]
   specs?: Record<string, string>
+  serviceDetails?: ProductServiceDetails
+  downloadableDetails?: ProductDownloadableDetails
   createdAt: Date
   updatedAt: Date
+}
+
+export type ProductType = 'physical' | 'service' | 'downloadable'
+
+export interface ProductServiceDetails {
+  deliveryMode?: 'online' | 'onsite' | 'hybrid'
+  duration?: string
+  turnaround?: string
+  bookingNotes?: string
+}
+
+export interface ProductDownloadableDetails {
+  downloadUrl?: string
+  fileFormat?: string
+  fileSizeMb?: number
+  licenseInfo?: string
 }
 
 export interface Category {

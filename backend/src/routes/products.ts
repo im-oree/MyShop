@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express'
 import { sendSuccess, sendError, sendPaginated } from '../utils/response.js'
-import { productService, userService, orderService } from '../services/index.js'
+import { productService, userService, orderService, auditLogService } from '../services/index.js'
 import { authenticate, optionalAuth } from '../middlewares/index.js'
-import { OrderStatus, PaymentStatus } from '../types/index.js'
+import { OrderStatus, PaymentStatus, ProductType } from '../types/index.js'
 import { getEffectivePermissions, hasAccess } from '../utils/rbac.js'
 
 const router = Router()
@@ -34,15 +34,54 @@ function toSpecMap(value: unknown): Record<string, string> {
   return {}
 }
 
-async function requireProductManager(req: Request, res: Response, required: 'read' | 'write' = 'write'): Promise<{ id: string; role: string; name: string; scopeSellerId: string } | null> {
+function toProductType(value: unknown): ProductType {
+  if (value === 'service' || value === 'downloadable') return value
+  return 'physical'
+}
+
+function toServiceDetails(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+
+  const source = value as Record<string, unknown>
+  const details = removeEmptyValues({
+    deliveryMode: source.deliveryMode,
+    duration: source.duration != null ? String(source.duration).trim() : undefined,
+    turnaround: source.turnaround != null ? String(source.turnaround).trim() : undefined,
+    bookingNotes: source.bookingNotes != null ? String(source.bookingNotes).trim() : undefined,
+  })
+
+  return Object.keys(details).length ? details : undefined
+}
+
+function toDownloadableDetails(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+
+  const source = value as Record<string, unknown>
+  const details = removeEmptyValues({
+    downloadUrl: source.downloadUrl != null ? String(source.downloadUrl).trim() : undefined,
+    fileFormat: source.fileFormat != null ? String(source.fileFormat).trim() : undefined,
+    fileSizeMb: source.fileSizeMb != null && source.fileSizeMb !== '' ? Number(source.fileSizeMb) : undefined,
+    licenseInfo: source.licenseInfo != null ? String(source.licenseInfo).trim() : undefined,
+  })
+
+  return Object.keys(details).length ? details : undefined
+}
+
+function removeEmptyValues(value: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item != null && item !== '')
+  )
+}
+
+async function requireProductManager(req: Request, res: Response, required: 'read' | 'write' = 'write'): Promise<{ id: string; role: string; name: string; scopeOwnerId: string } | null> {
   if (!req.userId) {
     sendError(res, 'Unauthorized', 401)
     return null
   }
 
   const user = await userService.getById(req.userId)
-  if (!user || !['seller', 'admin', 'employee'].includes(user.role)) {
-    sendError(res, 'Only sellers and admins can manage products', 403)
+  if (!user || !['admin', 'manager', 'employee'].includes(user.role)) {
+    sendError(res, 'Only admins, managers, and employees can manage products', 403)
     return null
   }
 
@@ -52,13 +91,13 @@ async function requireProductManager(req: Request, res: Response, required: 'rea
     return null
   }
 
-  const scopeSellerId = user.role === 'employee' ? (user.employeeOfSellerId || '') : user.id
-  if (!scopeSellerId) {
-    sendError(res, 'Seller scope not found for employee', 403)
+  const scopeOwnerId = user.role === 'employee' ? (user.managedByUserId || '') : user.id
+  if (!scopeOwnerId) {
+    sendError(res, 'Owner scope not found for employee', 403)
     return null
   }
 
-  return { id: user.id, role: user.role, name: user.name, scopeSellerId }
+  return { id: user.id, role: user.role, name: user.name, scopeOwnerId }
 }
 
 function toDateValue(value: unknown): Date {
@@ -86,13 +125,13 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
     const category = req.query.category as string
     const featured = req.query.featured === 'true'
     const search = req.query.search as string
-    const sellerId = req.query.sellerId as string
+    const productType = req.query.productType as ProductType | undefined
     
     const { products, total } = await productService.getAll(page, limit, {
       category,
       featured: featured || undefined,
       search,
-      sellerId,
+      productType,
     })
     
     sendPaginated(res, products, total, page, limit)
@@ -104,14 +143,14 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
 
 /**
  * GET /api/products/mine
- * Get products for the current seller/admin.
+ * Get products for the current owner/admin.
  */
 router.get('/mine', authenticate, async (req: Request, res: Response) => {
   try {
     const manager = await requireProductManager(req, res, 'read')
     if (!manager) return
 
-    const products = await productService.getBySellerId(manager.scopeSellerId)
+    const { products } = await productService.getAll(1, 1000, { search: '' })
     sendSuccess(res, products, 'My products fetched')
   } catch (error) {
     console.error('Get my products error:', error)
@@ -121,7 +160,7 @@ router.get('/mine', authenticate, async (req: Request, res: Response) => {
 
 /**
  * GET /api/products/mine/analytics
- * Seller analytics derived from real products and orders.
+ * Owner analytics derived from real products and orders.
  */
 router.get('/mine/analytics', authenticate, async (req: Request, res: Response) => {
   try {
@@ -130,9 +169,9 @@ router.get('/mine/analytics', authenticate, async (req: Request, res: Response) 
 
     const range = (req.query.range as '7day' | '30day' | '90day') || '30day'
     const rangeDays = getRangeDays(range)
-    const products = await productService.getBySellerId(manager.scopeSellerId)
+    const { products } = await productService.getAll(1, 1000, { search: '' })
     const allOrders = await orderService.getAllRecords()
-    const sellerProductIds = new Set(products.map(product => product.id))
+    const ownerProductIds = new Set(products.map(product => product.id))
     const now = new Date()
     const startDate = new Date(now)
     startDate.setDate(startDate.getDate() - (rangeDays - 1))
@@ -151,20 +190,20 @@ router.get('/mine/analytics', authenticate, async (req: Request, res: Response) 
     const productSales = new Map<string, { salesCount: number; revenue: number }>()
     let totalSalesCount = 0
     let totalRevenue = 0
-    let totalOrdersWithSellerItems = 0
+    let totalOrdersWithOwnerItems = 0
 
     completedOrders.forEach(order => {
       const orderDate = toDateValue(order.createdAt)
       if (orderDate < startDate) return
 
-      const sellerItems = order.items.filter(item => sellerProductIds.has(item.productId))
-      if (sellerItems.length === 0) return
+      const ownerItems = order.items.filter(item => ownerProductIds.has(item.productId))
+      if (ownerItems.length === 0) return
 
-      totalOrdersWithSellerItems += 1
+      totalOrdersWithOwnerItems += 1
       const dayKey = orderDate.toISOString().slice(0, 10)
       const currentDay = salesByDay.get(dayKey) || { salesCount: 0, revenue: 0 }
 
-      sellerItems.forEach(item => {
+      ownerItems.forEach(item => {
         const itemRevenue = item.price * item.quantity
         totalSalesCount += item.quantity
         totalRevenue += itemRevenue
@@ -222,22 +261,20 @@ router.get('/mine/analytics', authenticate, async (req: Request, res: Response) 
       .slice(0, 5)
 
     const inventoryValue = products.reduce((sum, product) => sum + (product.salePrice ?? product.price) * product.stock, 0)
-    const avgOrderValue = totalOrdersWithSellerItems > 0 ? totalRevenue / totalOrdersWithSellerItems : 0
+    const avgOrderValue = totalOrdersWithOwnerItems > 0 ? totalRevenue / totalOrdersWithOwnerItems : 0
     const avgPrice = products.length > 0 ? products.reduce((sum, product) => sum + (product.salePrice ?? product.price), 0) / products.length : 0
-    const sellerProfile = (await userService.getById(manager.scopeSellerId))?.sellerProfile
-
     sendSuccess(res, {
       range,
       summary: {
         totalProducts: products.length,
-        totalOrders: totalOrdersWithSellerItems,
+        totalOrders: totalOrdersWithOwnerItems,
         totalSalesCount,
         totalRevenue,
         avgOrderValue,
         inventoryValue,
         avgPrice,
-        totalReviews: sellerProfile?.totalReviews ?? 0,
-        rating: sellerProfile?.rating ?? 0,
+        totalReviews: 0,
+        rating: 0,
       },
       charts: {
         salesSeries,
@@ -253,16 +290,16 @@ router.get('/mine/analytics', authenticate, async (req: Request, res: Response) 
           name: product.name,
           stock: product.stock,
         })),
-    }, 'Seller analytics fetched')
+    }, 'Owner analytics fetched')
   } catch (error) {
-    console.error('Get seller analytics error:', error)
+    console.error('Get owner analytics error:', error)
     sendError(res, String(error), 500, 'Failed to fetch seller analytics')
   }
 })
 
 /**
  * POST /api/products
- * Create a new product for the authenticated seller/admin.
+ * Create a new product for the authenticated owner/admin.
  */
 router.post('/', authenticate, async (req: Request, res: Response) => {
   try {
@@ -278,41 +315,65 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       category,
       stock,
       featured,
-      sellerName,
       tags,
       images,
       features,
       specs,
       currency,
+      productType: incomingProductType,
+      serviceDetails,
+      downloadableDetails,
     } = req.body
 
-    if (!name || !description || price == null || !category || stock == null) {
+    const productType = toProductType(incomingProductType)
+
+    if (!name || !description || price == null || !category) {
       sendError(res, 'Missing required fields', 400)
       return
     }
 
+    if (productType === 'physical' && stock == null) {
+      sendError(res, 'Stock is required for physical products', 400)
+      return
+    }
+
     const imageList = Array.isArray(images) ? images.filter(Boolean) : []
-    if (imageList.length === 0) {
+    if (productType === 'physical' && imageList.length === 0) {
       sendError(res, 'At least one product image is required', 400)
       return
     }
 
     const created = await productService.create({
       name: String(name).trim(),
-      sellerName: sellerName ? String(sellerName).trim() : manager.name,
-      sellerId: manager.scopeSellerId,
+      ownerId: manager.scopeOwnerId,
       description: String(description).trim(),
+      productType,
       price: Number(price),
       currency: currency || 'NGN',
-      images: imageList,
+      images: imageList.length > 0 ? imageList : ['https://placehold.co/1000x750?text=Product'],
       category: String(category).trim(),
       tags: toStringList(tags),
-      stock: Number(stock),
+      stock: productType === 'physical' ? Number(stock) : Number(stock ?? 999999),
       discount: discount != null && discount !== '' ? Number(discount) : undefined,
       salePrice: salePrice != null && salePrice !== '' ? Number(salePrice) : undefined,
       featured: Boolean(featured),
       features: toStringList(features),
       specs: toSpecMap(specs),
+      serviceDetails: productType === 'service' ? toServiceDetails(serviceDetails) : undefined,
+      downloadableDetails: productType === 'downloadable' ? toDownloadableDetails(downloadableDetails) : undefined,
+    })
+
+    // Audit log
+    void auditLogService.log({
+      actorId: manager.id,
+      actorName: manager.name,
+      actorRole: manager.role,
+      action: 'product.create',
+      resourceType: 'product',
+      resourceId: created.id,
+      meta: { name: created.name, ownerId: created.ownerId },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
     })
 
     sendSuccess(res, created, 'Product created', 201)
@@ -393,7 +454,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
       return
     }
 
-    if (manager.role !== 'admin' && product.sellerId !== manager.scopeSellerId) {
+    if (manager.role !== 'admin' && product.ownerId !== manager.scopeOwnerId) {
       sendError(res, 'Unauthorized', 403)
       return
     }
@@ -408,14 +469,28 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
     if (req.body.category != null) updates.category = String(req.body.category).trim()
     if (req.body.stock != null) updates.stock = Number(req.body.stock)
     if (req.body.featured != null) updates.featured = Boolean(req.body.featured)
-    if (req.body.sellerName != null) updates.sellerName = String(req.body.sellerName).trim()
     if (req.body.images != null) updates.images = Array.isArray(req.body.images) ? req.body.images.filter(Boolean) : []
     if (req.body.tags != null) updates.tags = toStringList(req.body.tags)
     if (req.body.features != null) updates.features = toStringList(req.body.features)
     if (req.body.specs != null) updates.specs = toSpecMap(req.body.specs)
+    if (req.body.productType != null) updates.productType = toProductType(req.body.productType)
+    if (req.body.serviceDetails != null) updates.serviceDetails = toServiceDetails(req.body.serviceDetails)
+    if (req.body.downloadableDetails != null) updates.downloadableDetails = toDownloadableDetails(req.body.downloadableDetails)
 
     await productService.update(req.params.id, updates as Partial<import('../types/index.js').Product>)
     const updated = await productService.getById(req.params.id)
+    void auditLogService.log({
+      actorId: manager.id,
+      actorName: manager.name,
+      actorRole: manager.role,
+      action: 'product.update',
+      resourceType: 'product',
+      resourceId: req.params.id,
+      meta: { updates },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
     sendSuccess(res, updated, 'Product updated')
   } catch (error) {
     console.error('Update product error:', error)
@@ -438,12 +513,24 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       return
     }
 
-    if (manager.role !== 'admin' && product.sellerId !== manager.scopeSellerId) {
+    if (manager.role !== 'admin' && product.ownerId !== manager.scopeOwnerId) {
       sendError(res, 'Unauthorized', 403)
       return
     }
 
     await productService.delete(req.params.id)
+    void auditLogService.log({
+      actorId: manager.id,
+      actorName: manager.name,
+      actorRole: manager.role,
+      action: 'product.delete',
+      resourceType: 'product',
+      resourceId: req.params.id,
+      meta: {},
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
     sendSuccess(res, { id: req.params.id }, 'Product deleted')
   } catch (error) {
     console.error('Delete product error:', error)

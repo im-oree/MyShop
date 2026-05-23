@@ -358,4 +358,25 @@ router.patch('/:id/status', authenticate, async (req: Request, res: Response) =>
   }
 })
 
+/**
+ * GET /api/orders/incomplete/count
+ * Get count of incomplete orders for authenticated user
+ */
+router.get('/incomplete/count', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { orders } = await orderService.getByUserId(req.userId!, 1, 1000)
+    
+    // Count orders that are not complete or cancelled
+    const incompleteCount = (orders || []).filter((order: any) => {
+      const status = normalizeOrderStage(order.status)
+      return status !== OrderStatus.COMPLETED && status !== OrderStatus.CANCELLED && status !== OrderStatus.REFUNDED
+    }).length
+    
+    sendSuccess(res, incompleteCount)
+  } catch (error) {
+    console.error('Get incomplete orders count error:', error)
+    sendError(res, String(error), 500, 'Failed to get incomplete orders count')
+  }
+})
+
 export default router

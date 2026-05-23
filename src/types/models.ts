@@ -22,6 +22,16 @@ export interface User {
   name: string
   phone?: string
   role: 'user' | 'admin' | 'manager' | 'employee' // role-based access for customers and staff
+  // Deprecated marketplace fields retained for compatibility with older UI code.
+  sellerProfile?: {
+    shopName: string
+    shopDescription: string
+    rating: number
+    totalReviews: number
+    followers: number
+  }
+  appliedAsSeller?: boolean
+  sellerApproved?: boolean
   employeeTitle?: string
   employeeRoleTemplate?: EmployeeRoleTemplate
   employeePermissions?: EmployeePermissions
@@ -47,23 +57,47 @@ export interface Product {
   id: string
   name: string
   description: string
+  productType?: ProductType
   price: number
   currency: string
   images: string[]
   category: string
   tags: string[]
   stock: number
+  ownerId?: string
+  sellerName?: string
+  sellerId?: string
   discount?: number
   salePrice?: number
   featured: boolean
   features?: string[]
   specs?: Record<string, string>
+  serviceDetails?: ProductServiceDetails
+  downloadableDetails?: ProductDownloadableDetails
   createdAt: Date
   updatedAt: Date
 }
 
+export type ProductType = 'physical' | 'service' | 'downloadable'
+
+export interface ProductServiceDetails {
+  deliveryMode?: 'online' | 'onsite' | 'hybrid'
+  duration?: string
+  turnaround?: string
+  bookingNotes?: string
+}
+
+export interface ProductDownloadableDetails {
+  downloadUrl?: string
+  fileFormat?: string
+  fileSizeMb?: number
+  licenseInfo?: string
+}
+
 export interface CartItem {
   productId: string
+  productName?: string
+  productImage?: string
   quantity: number
   price: number
 }

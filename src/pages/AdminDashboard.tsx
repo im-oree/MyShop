@@ -5,15 +5,37 @@ import { useAuthStore } from '@/store/authStore'
 import type { User } from '@/types'
 import Dropdown from '@/components/Dropdown'
 import { productService } from '@/services/productService'
+import {
+  Users,
+  DollarSign,
+  Package,
+  ShieldCheck,
+  TrendingUp,
+  TrendingDown,
+  Crown,
+  Briefcase,
+  UserCircle,
+  Search,
+  X,
+  Eye,
+  AlertCircle,
+  Calendar,
+  ArrowRight,
+  RefreshCw,
+  Shield,
+  FileText,
+  ShoppingBag,
+  ChevronRight,
+} from 'lucide-react'
 
 type RevenueRange = 'today' | 'week' | 'month'
-type AdminSection = 'users' | 'revenue' | 'verification'
+type AdminSection = 'users' | 'revenue' | 'staff'
 
 const roleOptions = [
-  { value: 'user', label: 'User' },
-  { value: 'seller', label: 'Seller' },
-  { value: 'moderator', label: 'Moderator' },
-  { value: 'admin', label: 'Admin' },
+  { value: 'user',     label: 'User' },
+  { value: 'manager',  label: 'Manager' },
+  { value: 'employee', label: 'Employee' },
+  { value: 'admin',    label: 'Admin' },
 ]
 
 type AdminOverview = {
@@ -30,13 +52,8 @@ type AdminOverview = {
     thisMonth: number
     timeline: Array<{ label: string; date: string; revenue: number; orders: number }>
   }
-  products: {
-    totalProducts: number
-  }
-  sellerVerification: {
-    pending: User[]
-    approved: number
-  }
+  products: { totalProducts: number }
+  sellerVerification: { pending: User[]; approved: number }
 }
 
 type RevenuePayload = {
@@ -56,62 +73,171 @@ function currency(value: number) {
 }
 
 function roleLabel(role: User['role']) {
-  if (role === 'admin') return 'Admin'
-  if (role === 'moderator') return 'Moderator'
-  if (role === 'seller') return 'Seller'
+  if (role === 'admin')    return 'Admin'
+  if (role === 'manager')  return 'Manager'
+  if (role === 'employee') return 'Employee'
   return 'User'
 }
 
-function badgeClass(role: User['role']) {
-  if (role === 'admin') return 'bg-slate-900 text-white'
-  if (role === 'moderator') return 'bg-amber-100 text-amber-800'
-  if (role === 'seller') return 'bg-emerald-100 text-emerald-800'
-  return 'bg-gray-100 text-gray-700'
+function roleConfig(role: User['role']) {
+  if (role === 'admin')    return { icon: Crown,       color: 'text-amber-700', bg: 'bg-amber-100' }
+  if (role === 'manager')  return { icon: ShieldCheck, color: 'text-emerald-700', bg: 'bg-emerald-100' }
+  if (role === 'employee') return { icon: Briefcase,   color: 'text-sky-700',    bg: 'bg-sky-100' }
+  return { icon: UserCircle, color: 'text-gray-700', bg: 'bg-gray-100' }
 }
 
+/* ─────────────────────────────────────────────
+   METRIC CARD
+───────────────────────────────────────────── */
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  badge,
+  badgeColor,
+  loading,
+  color = 'primary',
+}: {
+  icon: any
+  label: string
+  value?: React.ReactNode
+  sub?: string
+  badge?: string
+  badgeColor?: 'green' | 'amber' | 'blue' | 'gray'
+  loading?: boolean
+  color?: 'primary' | 'green' | 'amber' | 'blue'
+}) {
+  const colorMap = {
+    primary: 'bg-primary/10 text-primary',
+    green:   'bg-green-50 text-green-600',
+    amber:   'bg-amber-50 text-amber-600',
+    blue:    'bg-blue-50 text-blue-600',
+  }
+  const badgeMap = {
+    green: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
+    blue:  'bg-blue-50 text-blue-700',
+    gray:  'bg-gray-100 text-gray-700',
+  }
+  return (
+    <div className="bg-white rounded-2xl border border-border p-3 sm:p-4 hover:shadow-sm transition-all">
+      <div className="flex items-start justify-between mb-2">
+        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center ${colorMap[color]}`}>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+        </div>
+        {badge && !loading && (
+          <span className={`text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full ${badgeMap[badgeColor || 'gray']}`}>
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className="text-[10px] sm:text-xs text-muted-text font-medium uppercase tracking-wider mb-0.5">{label}</p>
+      {loading ? (
+        <div className="h-6 sm:h-7 w-16 bg-gray-100 rounded animate-pulse" />
+      ) : (
+        <p className="text-lg sm:text-2xl font-bold text-text tabular-nums leading-tight truncate">{value}</p>
+      )}
+      {sub && !loading && <p className="text-[10px] sm:text-xs text-muted-text mt-0.5 truncate">{sub}</p>}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   QUICK LINK CARD
+───────────────────────────────────────────── */
+function QuickLink({
+  to,
+  icon: Icon,
+  label,
+  description,
+  color = 'primary',
+}: {
+  to: string
+  icon: any
+  label: string
+  description: string
+  color?: 'primary' | 'green' | 'amber' | 'blue'
+}) {
+  const colorMap = {
+    primary: 'bg-primary/10 text-primary group-hover:bg-primary/15',
+    green:   'bg-green-50 text-green-600 group-hover:bg-green-100',
+    amber:   'bg-amber-50 text-amber-600 group-hover:bg-amber-100',
+    blue:    'bg-blue-50 text-blue-600 group-hover:bg-blue-100',
+  }
+  return (
+    <Link
+      to={to}
+      className="group flex items-center gap-3 rounded-2xl border border-border bg-white p-3 sm:p-4 hover:shadow-md hover:border-primary/30 transition-all"
+    >
+      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${colorMap[color]}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-text">{label}</p>
+        <p className="text-[11px] text-muted-text mt-0.5 truncate">{description}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+    </Link>
+  )
+}
+
+/* ═════════════════════════════════════════════
+   MAIN PAGE
+═════════════════════════════════════════════ */
 function AdminDashboard() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const [activeSection, setActiveSection] = useState<AdminSection>('users')
-  const [overview, setOverview] = useState<AdminOverview | null>(null)
-  const [revenue, setRevenue] = useState<RevenuePayload | null>(null)
+  const [activeSection, setActiveSection]   = useState<AdminSection>('users')
+  const [overview, setOverview]             = useState<AdminOverview | null>(null)
+  const [revenue, setRevenue]               = useState<RevenuePayload | null>(null)
   const [loadingOverview, setLoadingOverview] = useState(true)
-  const [loadingRevenue, setLoadingRevenue] = useState(false)
-  const [timeline, setTimeline] = useState<RevenueRange>('week')
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [mutatingId, setMutatingId] = useState<string | null>(null)
+  const [loadingRevenue, setLoadingRevenue]   = useState(false)
+  const [refreshing, setRefreshing]         = useState(false)
+  const [timeline, setTimeline]             = useState<RevenueRange>('week')
+  const [selectedUser, setSelectedUser]     = useState<User | null>(null)
+  const [mutatingId, setMutatingId]         = useState<string | null>(null)
+  const [searchInput, setSearchInput]       = useState('')
+  const [searchQuery, setSearchQuery]       = useState('')
+  const [topProducts, setTopProducts]       = useState<any[]>([])
 
+  /* ── Auth ── */
   useEffect(() => {
     if (!user) {
       navigate('/login')
       return
     }
-
-    if (user.role !== 'admin' && user.role !== 'moderator') {
+    if (user.role !== 'admin' && user.role !== 'manager') {
       navigate('/')
-      return
     }
   }, [navigate, user])
 
+  /* ── Debounce search ── */
   useEffect(() => {
-    async function loadOverview() {
-      setLoadingOverview(true)
-      try {
-        const { data } = await apiClient.get('/admin/overview')
-        setOverview(data.data)
-      } catch (error) {
-        console.error('Failed to load admin overview:', error)
-      } finally {
-        setLoadingOverview(false)
-      }
+    const t = setTimeout(() => setSearchQuery(searchInput.trim().toLowerCase()), 250)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  /* ── Load overview ── */
+  const loadOverview = async (silent = false) => {
+    if (silent) setRefreshing(true); else setLoadingOverview(true)
+    try {
+      const { data } = await apiClient.get('/admin/overview')
+      setOverview(data.data)
+    } catch (error) {
+      console.error('Failed to load admin overview:', error)
+    } finally {
+      setLoadingOverview(false)
+      setRefreshing(false)
     }
+  }
 
-    void loadOverview()
-  }, [])
+  useEffect(() => { void loadOverview() }, [])
 
+  /* ── Load revenue ── */
   useEffect(() => {
-    async function loadRevenue() {
+    const loadRevenue = async () => {
       setLoadingRevenue(true)
       try {
         const { data } = await apiClient.get('/admin/revenue', { params: { range: timeline } })
@@ -122,42 +248,36 @@ function AdminDashboard() {
         setLoadingRevenue(false)
       }
     }
-
     void loadRevenue()
   }, [timeline])
 
-  const users = overview?.users.users || []
-  const pendingApplications = overview?.sellerVerification.pending || []
-  const totalUsers = overview?.users.totalUsers || 0
-  const activeUsers = overview?.users.activeUsers || 0
-  const sellerCount = overview?.users.sellerCount || 0
-  const totalProducts = overview?.products.totalProducts || 0
-  const totalRevenue = revenue?.totalRevenue ?? overview?.revenue.totalRevenue ?? 0
+  /* ── Load top products ── */
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const data: any = await productService.getFeatured(6)
+        if (mounted) setTopProducts(data.items || data || [])
+      } catch (err) {
+        console.error('Failed to load featured products', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
 
-  const revenueSeries = useMemo(() => revenue?.series || [], [revenue])
-  const chartMax = Math.max(...revenueSeries.map((item) => item.amount), 1)
-
-  async function approveSeller(id: string) {
-    setMutatingId(id)
+  const refresh = async () => {
+    setRefreshing(true)
     try {
-      await apiClient.post(`/users/${id}/approve-seller`)
-      await refreshAdminData()
-    } catch (error) {
-      console.error('Approve seller failed:', error)
+      const [{ data: o }, { data: r }] = await Promise.all([
+        apiClient.get('/admin/overview'),
+        apiClient.get('/admin/revenue', { params: { range: timeline } }),
+      ])
+      setOverview(o.data)
+      setRevenue(r.data)
+    } catch (e) {
+      console.error('Refresh failed:', e)
     } finally {
-      setMutatingId(null)
-    }
-  }
-
-  async function rejectSeller(id: string) {
-    setMutatingId(id)
-    try {
-      await apiClient.post(`/users/${id}/reject-seller`)
-      await refreshAdminData()
-    } catch (error) {
-      console.error('Reject seller failed:', error)
-    } finally {
-      setMutatingId(null)
+      setRefreshing(false)
     }
   }
 
@@ -165,7 +285,7 @@ function AdminDashboard() {
     setMutatingId(id)
     try {
       await apiClient.post(`/users/${id}/set-role`, { role })
-      await refreshAdminData()
+      await refresh()
     } catch (error) {
       console.error('Role update failed:', error)
     } finally {
@@ -173,397 +293,516 @@ function AdminDashboard() {
     }
   }
 
-  async function refreshAdminData() {
-    const [{ data: overviewResponse }, { data: revenueResponse }] = await Promise.all([
-      apiClient.get('/admin/overview'),
-      apiClient.get('/admin/revenue', { params: { range: timeline } }),
-    ])
+  const users          = overview?.users.users || []
+  const totalUsers     = overview?.users.totalUsers || 0
+  const activeUsers    = overview?.users.activeUsers || 0
+  const sellerCount    = overview?.users.sellerCount || 0
+  const totalProducts  = overview?.products.totalProducts || 0
+  const totalRevenue   = revenue?.totalRevenue ?? overview?.revenue.totalRevenue ?? 0
+  const pendingStaff   = overview?.sellerVerification?.pending?.length || 0
 
-    setOverview(overviewResponse.data)
-    setRevenue(revenueResponse.data)
-  }
+  const revenueSeries = useMemo(() => revenue?.series || [], [revenue])
+  const chartMax = Math.max(...revenueSeries.map((item) => item.amount), 1)
 
-  const tabs: Array<{ key: AdminSection; label: string; description: string }> = [
-    { key: 'users', label: 'Users', description: 'Accounts, roles, and activity' },
-    { key: 'revenue', label: 'Revenue', description: 'Totals, trend lines, and timeframes' },
-    { key: 'verification', label: 'Seller verification', description: 'Approve, disapprove, and inspect applicants' },
+  // Filter users by search
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users
+    return users.filter((u) =>
+      u.name?.toLowerCase().includes(searchQuery) ||
+      u.email?.toLowerCase().includes(searchQuery) ||
+      u.role?.toLowerCase().includes(searchQuery)
+    )
+  }, [users, searchQuery])
+
+  const tabs: Array<{ key: AdminSection; label: string; icon: any; count?: number }> = [
+    { key: 'users',   label: 'Users',   icon: Users,       count: totalUsers },
+    { key: 'revenue', label: 'Revenue', icon: DollarSign },
+    { key: 'staff',   label: 'Staff',   icon: ShieldCheck, count: sellerCount },
   ]
 
-  const [topProducts, setTopProducts] = useState<any[]>([])
-
-  const STOCK_FILTERS = [
-    { value: 'all', label: 'All' },
-    { value: 'low-stock', label: 'Low stock' },
-    { value: 'out-of-stock', label: 'Out of stock' },
-  ]
-
-  useEffect(() => {
-    let mounted = true
-    async function loadTop() {
-      try {
-        const data = await productService.getFeatured(6)
-        if (mounted) setTopProducts(data.items || data || [])
-      } catch (err) {
-        console.error('Failed to load featured products', err)
-      }
-    }
-    void loadTop()
-    return () => { mounted = false }
-  }, [])
-
-  if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
+  if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
     return null
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pb-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-secondary">Control center</p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-text">Admin Dashboard</h1>
-          <p className="text-sm text-muted-text mt-2 max-w-2xl">
-            Users, revenue, and seller verification are organized into separate views so you can act quickly.
-          </p>
+    <div className="min-h-[80dvh] animate-fade-in pb-24 lg:pb-10">
+      {/* ── Sticky header ── */}
+      <div className="sticky top-16 sm:top-[72px] z-20 -mx-3 sm:mx-0 px-3 sm:px-0 py-3 bg-bg/95 backdrop-blur-md mb-3">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-bold text-secondary uppercase tracking-wider">Control center</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-text">Admin Dashboard</h1>
+            <p className="text-xs text-muted-text mt-0.5 hidden sm:block">
+              Users, revenue, and staff access at a glance
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={refresh}
+              disabled={refreshing}
+              aria-label="Refresh"
+              className="inline-flex items-center justify-center p-2 rounded-xl border border-border bg-white text-text hover:border-primary/30 hover:text-primary disabled:opacity-50 transition-all"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <Link
+              to="/"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-text hover:border-primary/30 hover:text-primary transition-all"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Store
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link to="/" className="px-4 py-2 rounded-xl border border-border bg-white text-sm font-medium text-text hover:bg-gray-50">
-            Back to store
-          </Link>
+
+        {/* Section tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 hide-scrollbar">
+          {tabs.map((tab) => {
+            const active = activeSection === tab.key
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveSection(tab.key)}
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                  active
+                    ? 'bg-text text-white border-text'
+                    : 'bg-white text-text border-border hover:border-gray-400'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className={`text-[10px] font-bold ${active ? 'text-white/80' : 'text-muted-text'}`}>
+                    {loadingOverview ? '…' : tab.count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-muted-text">Users</p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-3xl font-bold text-text">{loadingOverview ? '...' : totalUsers}</p>
-              <p className="text-sm text-muted-text mt-1">Total users</p>
-            </div>
-            <span className="text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 px-3 py-1">{activeUsers} active</span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-muted-text">Sellers</p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-3xl font-bold text-text">{loadingOverview ? '...' : sellerCount}</p>
-              <p className="text-sm text-muted-text mt-1">Verified sellers</p>
-            </div>
-            <span className="text-xs font-semibold rounded-full bg-amber-50 text-amber-700 px-3 py-1">{pendingApplications.length} pending</span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-muted-text">Revenue</p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-3xl font-bold text-text">{currency(totalRevenue)}</p>
-              <p className="text-sm text-muted-text mt-1">Gross collected</p>
-            </div>
-            <span className="text-xs font-semibold rounded-full bg-slate-100 text-slate-700 px-3 py-1">{timeline}</span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-muted-text">Inventory</p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-3xl font-bold text-text">{loadingOverview ? '...' : totalProducts}</p>
-              <p className="text-sm text-muted-text mt-1">Total products</p>
-            </div>
-            <span className="text-xs font-semibold rounded-full bg-blue-50 text-blue-700 px-3 py-1">live</span>
-          </div>
-        </div>
+      {/* ── Quick links ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4">
+        <QuickLink to="/admin/store/access"   icon={Shield}      label="Staff access" description="Manage permissions" color="green" />
+        <QuickLink to="/admin/store/audit"    icon={FileText}    label="Audit log"    description="Activity history"   color="amber" />
+        <QuickLink to="/admin/store/products" icon={Package}     label="Products"     description="Inventory & listings" color="blue" />
+        <QuickLink to="/admin/store/orders"   icon={ShoppingBag} label="Orders"       description="Manage customer orders" color="primary" />
       </div>
 
-      {/* Quick inventory + top sellers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:col-span-1">
-          <h3 className="text-sm font-semibold text-text">Inventory quick filters</h3>
-          <p className="text-xs text-muted-text mt-1">Jump to product list filtered by stock state</p>
-          <div className="mt-3 flex items-center gap-2">
-            <Dropdown
-              options={STOCK_FILTERS}
-              value="all"
-              onChange={(val) => {
-                const v = val as string
-                if (v === 'all') navigate('/products')
-                else navigate(`/products?stock=${encodeURIComponent(v)}`)
-              }}
-              placeholder="Filter"
-              buttonClassName="px-2 py-1 text-sm"
+      {/* ── Hero stats ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mb-4">
+        <MetricCard
+          icon={Users}
+          label="Users"
+          value={totalUsers}
+          badge={`${activeUsers} active`}
+          badgeColor="green"
+          loading={loadingOverview}
+          color="primary"
+        />
+        <MetricCard
+          icon={ShieldCheck}
+          label="Staff"
+          value={sellerCount}
+          badge={pendingStaff > 0 ? `${pendingStaff} pending` : 'all clear'}
+          badgeColor={pendingStaff > 0 ? 'amber' : 'green'}
+          loading={loadingOverview}
+          color="green"
+        />
+        <MetricCard
+          icon={DollarSign}
+          label="Revenue"
+          value={currency(totalRevenue)}
+          sub={`This ${timeline}`}
+          loading={loadingRevenue && !revenue}
+          color="amber"
+        />
+        <MetricCard
+          icon={Package}
+          label="Products"
+          value={totalProducts}
+          badge="live"
+          badgeColor="blue"
+          loading={loadingOverview}
+          color="blue"
+        />
+      </div>
+
+      {/* ── Pending staff alert ── */}
+      {pendingStaff > 0 && (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
+            <AlertCircle className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text">
+              {pendingStaff} staff account{pendingStaff !== 1 ? 's' : ''} pending review
+            </p>
+            <p className="text-xs text-muted-text mt-0.5">Verify their access permissions</p>
+          </div>
+          <button
+            onClick={() => setActiveSection('staff')}
+            className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline"
+          >
+            Review
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────
+         USERS SECTION
+      ───────────────────────────────── */}
+      {activeSection === 'users' && (
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by name, email, or role…"
+              className="w-full rounded-xl border border-border bg-white pl-10 pr-10 py-2.5 text-sm placeholder:text-gray-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
-            <Link to="/products" className="text-sm text-secondary hover:underline">View all products</Link>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-text">Top selling (compact)</h3>
-              <p className="text-sm text-muted-text mt-1">Small preview of popular items</p>
-            </div>
-            <Link to="/products" className="text-sm text-secondary hover:underline">See all</Link>
-          </div>
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            {topProducts.length === 0 ? (
-              <div className="text-sm text-muted-text">No featured products</div>
-            ) : (
-              topProducts.map((p) => (
-                <Link key={p.id} to={`/products`} className="rounded-xl border border-border p-2 flex flex-col items-center text-center text-xs hover:shadow-sm">
-                  <div className="w-20 h-20 bg-gray-50 rounded-md overflow-hidden flex items-center justify-center">
-                    {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover"/> : <div className="text-muted-text">No image</div>}
-                  </div>
-                  <div className="mt-2 font-medium text-text truncate w-20">{p.name}</div>
-                  <div className="text-[11px] text-muted-text mt-1">{currency(p.price)}</div>
-                  <div className={`text-[11px] mt-1 ${p.stock <= 0 ? 'text-red-600' : p.stock <= 5 ? 'text-amber-700' : 'text-green-700'}`}>Stock: {p.stock}</div>
-                </Link>
-              ))
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(''); setSearchQuery('') }}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveSection(tab.key)}
-            className={`min-w-[210px] rounded-2xl border px-4 py-3 text-left transition-all ${activeSection === tab.key ? 'border-primary bg-primary/5' : 'border-border bg-white hover:border-gray-300'}`}
-          >
-            <div className="font-semibold text-text">{tab.label}</div>
-            <div className="text-xs text-muted-text mt-1">{tab.description}</div>
-          </button>
-        ))}
-      </div>
-
-      {activeSection === 'users' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-text">All users</h2>
-                <p className="text-sm text-muted-text">Name, email, role, and seller status</p>
-              </div>
-              <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-3 py-1">{users.length} loaded</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-left text-muted-text">
-                  <tr>
-                    <th className="px-5 py-3 font-medium">Name</th>
-                    <th className="px-5 py-3 font-medium">Email</th>
-                    <th className="px-5 py-3 font-medium">Role</th>
-                    <th className="px-5 py-3 font-medium">Seller</th>
-                    <th className="px-5 py-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((item) => (
-                    <tr key={item.id} className="border-t border-border/60">
-                      <td className="px-5 py-4 font-medium text-text">{item.name}</td>
-                      <td className="px-5 py-4 text-muted-text">{item.email}</td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClass(item.role)}`}>
-                          {roleLabel(item.role)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-muted-text">
-                        {item.role === 'seller' ? 'Verified seller' : item.appliedAsSeller ? 'Pending verification' : 'Regular user'}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button onClick={() => setSelectedUser(item)} className="text-secondary hover:underline">View</button>
-                          <Dropdown
-                            options={roleOptions}
-                            value={item.role}
-                            onChange={(value) => setRole(item.id, value as User['role'])}
-                            className="min-w-[150px]"
-                            buttonClassName="rounded-lg px-2 py-1 text-xs"
-                            disabled={mutatingId === item.id}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {!loadingOverview && users.length === 0 && (
-                    <tr>
-                      <td className="px-5 py-8 text-center text-muted-text" colSpan={5}>No users found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-white shadow-sm p-5">
-            <h3 className="text-lg font-bold text-text">User summary</h3>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Active users</p>
-                <p className="text-2xl font-bold text-text mt-1">{activeUsers}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Seller accounts</p>
-                <p className="text-2xl font-bold text-text mt-1">{sellerCount}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Pending approvals</p>
-                <p className="text-2xl font-bold text-text mt-1">{pendingApplications.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeSection === 'revenue' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 rounded-2xl border border-border bg-white shadow-sm p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-text">Revenue trends</h2>
-                <p className="text-sm text-muted-text">Switch timeline to compare today, week, and month.</p>
-              </div>
-              <div className="inline-flex rounded-xl border border-border bg-gray-50 p-1">
-                {(['today', 'week', 'month'] as RevenueRange[]).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimeline(range)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize ${timeline === range ? 'bg-white shadow-sm text-primary' : 'text-muted-text hover:text-text'}`}
-                  >
-                    {range}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Today</p>
-                <p className="text-xl font-bold text-text mt-1">{currency(revenue?.today ?? overview?.revenue.today ?? 0)}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">This week</p>
-                <p className="text-xl font-bold text-text mt-1">{currency(revenue?.thisWeek ?? overview?.revenue.thisWeek ?? 0)}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">This month</p>
-                <p className="text-xl font-bold text-text mt-1">{currency(overview?.revenue.thisMonth ?? 0)}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 h-72 flex items-end gap-3 rounded-2xl bg-gradient-to-b from-white to-gray-50 p-4 overflow-x-auto">
-              {loadingRevenue ? (
-                <div className="text-muted-text">Loading chart...</div>
-              ) : revenueSeries.length === 0 ? (
-                <div className="text-muted-text">No revenue data for this period.</div>
-              ) : (
-                revenueSeries.map((point) => (
-                  <div key={`${point.label}-${point.count}`} className="flex w-16 min-w-[64px] flex-col items-center justify-end gap-2">
-                    <div className="text-[11px] text-muted-text text-center leading-tight">{currency(point.amount)}</div>
-                    <div className="w-full rounded-t-xl bg-secondary/80" style={{ height: `${Math.max((point.amount / chartMax) * 100, 6)}%` }} />
-                    <div className="text-xs font-medium text-text">{point.label}</div>
-                    <div className="text-[11px] text-muted-text">{point.count} orders</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-white shadow-sm p-5">
-            <h3 className="text-lg font-bold text-text">Revenue breakdown</h3>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Total revenue</p>
-                <p className="text-2xl font-bold text-text mt-1">{currency(totalRevenue)}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Chart points</p>
-                <p className="text-2xl font-bold text-text mt-1">{revenueSeries.length}</p>
-              </div>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-text">Range</p>
-                <p className="text-2xl font-bold text-text mt-1 capitalize">{timeline}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeSection === 'verification' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-text">Seller verification</h2>
-                <p className="text-sm text-muted-text">Approve, disapprove, or inspect applications.</p>
-              </div>
-              <span className="text-xs font-semibold rounded-full bg-amber-50 text-amber-700 px-3 py-1">{pendingApplications.length} waiting</span>
-            </div>
-            <div className="divide-y divide-border/60">
-              {pendingApplications.map((item) => (
-                <div key={item.id} className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center font-semibold text-primary">
-                      {item.name?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-text">{item.name}</h3>
-                      <p className="text-sm text-muted-text">{item.email}</p>
-                      <p className="text-sm text-muted-text mt-1">Shop: {item.sellerProfile?.shopName || 'No shop name'}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button onClick={() => setSelectedUser(item)} className="px-3 py-2 rounded-xl border border-border bg-white text-sm font-medium text-text hover:bg-gray-50">View</button>
-                    <button
-                      onClick={() => approveSeller(item.id)}
-                      disabled={mutatingId === item.id}
-                      className="px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-60"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => rejectSeller(item.id)}
-                      disabled={mutatingId === item.id}
-                      className="px-3 py-2 rounded-xl bg-red-50 text-danger text-sm font-medium hover:bg-red-100 disabled:opacity-60"
-                    >
-                      Disapprove
-                    </button>
+          {loadingOverview ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-white">
+                  <div className="skeleton w-11 h-11 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-4 w-32 rounded" />
+                    <div className="skeleton h-3 w-48 rounded" />
                   </div>
                 </div>
               ))}
-              {!loadingOverview && pendingApplications.length === 0 && (
-                <div className="p-5 text-muted-text">No pending seller applications</div>
-              )}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white px-4 py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-bold text-text mb-1">
+                {searchQuery ? 'No users match' : 'No users yet'}
+              </h3>
+              <p className="text-sm text-muted-text">
+                {searchQuery ? 'Try a different search' : 'New users will appear here'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredUsers.map((u) => {
+                const cfg = roleConfig(u.role)
+                const Icon = cfg.icon
+                return (
+                  <div
+                    key={u.id}
+                    className="group flex items-center gap-3 p-3 rounded-2xl border border-border bg-white hover:shadow-sm hover:border-primary/30 transition-all"
+                  >
+                    {/* Avatar */}
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-semibold shrink-0 ${cfg.bg} ${cfg.color}`}>
+                      {u.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-bold text-text truncate">{u.name}</p>
+                        <span className={`shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                          <Icon className="w-2.5 h-2.5" />
+                          {roleLabel(u.role)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-text truncate">{u.email}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setSelectedUser(u)}
+                        aria-label="View user"
+                        className="p-2 rounded-lg text-muted-text hover:text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <Dropdown
+                        options={roleOptions}
+                        value={u.role}
+                        onChange={(value) => setRole(u.id, value as User['role'])}
+                        className="min-w-[120px]"
+                        buttonClassName="rounded-lg px-2 py-1 text-xs"
+                        disabled={mutatingId === u.id}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {!loadingOverview && filteredUsers.length > 0 && (
+            <p className="text-center text-xs text-muted-text">
+              Showing {filteredUsers.length} of {users.length} user{users.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────
+         REVENUE SECTION
+      ───────────────────────────────── */}
+      {activeSection === 'revenue' && (
+        <div className="space-y-4">
+          {/* Range pills */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex rounded-xl border border-border bg-white p-0.5">
+              {(['today', 'week', 'month'] as RevenueRange[]).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeline(range)}
+                  className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all ${
+                    timeline === range
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-muted-text hover:text-text'
+                  }`}
+                >
+                  <Calendar className="w-3 h-3 inline mr-1 -mt-0.5" />
+                  {range}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-white shadow-sm p-5">
-            <h3 className="text-lg font-bold text-text">Selected application</h3>
-            {selectedUser ? (
-              <div className="mt-4 space-y-4">
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-text">Name</p>
-                  <p className="font-semibold text-text mt-1">{selectedUser.name}</p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-text">Email</p>
-                  <p className="font-semibold text-text mt-1">{selectedUser.email}</p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-text">Shop</p>
-                  <p className="font-semibold text-text mt-1">{selectedUser.sellerProfile?.shopName || 'N/A'}</p>
-                  <p className="text-sm text-muted-text mt-2">{selectedUser.sellerProfile?.shopDescription || 'No description available.'}</p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-text">Current status</p>
-                  <p className="font-semibold text-text mt-1">{selectedUser.appliedAsSeller ? 'Applied' : 'Not applied'}</p>
-                  <p className="text-sm text-muted-text mt-1">{selectedUser.role === 'seller' ? 'Verified seller' : 'Awaiting verification'}</p>
-                </div>
+          {/* Revenue stats */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <MetricCard
+              icon={TrendingUp}
+              label="Today"
+              value={currency(revenue?.today ?? overview?.revenue.today ?? 0)}
+              loading={loadingRevenue}
+              color="green"
+            />
+            <MetricCard
+              icon={TrendingUp}
+              label="This week"
+              value={currency(revenue?.thisWeek ?? overview?.revenue.thisWeek ?? 0)}
+              loading={loadingRevenue}
+              color="primary"
+            />
+            <MetricCard
+              icon={TrendingUp}
+              label="This month"
+              value={currency(overview?.revenue.thisMonth ?? 0)}
+              loading={loadingOverview}
+              color="blue"
+            />
+          </div>
+
+          {/* Chart */}
+          <div className="rounded-2xl border border-border bg-white p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-text">Revenue trend</h3>
+                <p className="text-[10px] sm:text-xs text-muted-text mt-0.5 capitalize">{timeline} view</p>
+              </div>
+              <div className="text-right">
+                <p className="text-base sm:text-lg font-bold text-text tabular-nums">{currency(totalRevenue)}</p>
+                <p className="text-[10px] text-muted-text">total</p>
+              </div>
+            </div>
+
+            {loadingRevenue ? (
+              <div className="h-48 bg-gray-50 rounded-xl animate-pulse" />
+            ) : revenueSeries.length === 0 ? (
+              <div className="h-48 flex flex-col items-center justify-center text-sm text-muted-text gap-2">
+                <TrendingDown className="w-8 h-8 text-gray-300" />
+                <p>No revenue data for this period</p>
               </div>
             ) : (
-              <p className="mt-4 text-sm text-muted-text">Click View on a seller application to inspect it here.</p>
+              <div className="h-48 flex items-end gap-1.5 sm:gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                {revenueSeries.map((point) => {
+                  const pct = Math.max((point.amount / chartMax) * 100, 4)
+                  return (
+                    <div
+                      key={`${point.label}-${point.count}`}
+                      className="group/bar relative flex w-10 sm:w-12 min-w-[40px] flex-col items-center justify-end gap-1.5 shrink-0"
+                    >
+                      <div className="relative w-full flex items-end" style={{ height: '100%' }}>
+                        <div
+                          className="w-full rounded-t-lg bg-gradient-to-t from-primary to-primary/70 hover:from-primary hover:to-primary transition-all cursor-pointer"
+                          style={{ height: `${pct}%` }}
+                          title={`${currency(point.amount)} • ${point.count} orders`}
+                        />
+                      </div>
+                      <div className="text-[10px] font-medium text-text">{point.label}</div>
+                      <div className="text-[9px] text-muted-text">{point.count}</div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
+
+          {/* Top products preview */}
+          <div className="rounded-2xl border border-border bg-white p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm sm:text-base font-bold text-text">Featured products</h3>
+              <Link to="/admin/store/products" className="text-xs font-semibold text-secondary hover:underline">
+                View all →
+              </Link>
+            </div>
+            {topProducts.length === 0 ? (
+              <p className="text-sm text-muted-text text-center py-6">No featured products</p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
+                {topProducts.map((p) => (
+                  <Link
+                    key={p.id}
+                    to="/admin/store/products"
+                    className="group/p flex flex-col items-center text-center"
+                  >
+                    <div className="w-full aspect-square bg-gray-50 rounded-xl overflow-hidden border border-border group-hover/p:border-primary/30 transition-colors">
+                      {p.images?.[0] ? (
+                        <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
+                          <Package className="w-6 h-6" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-medium text-text mt-1.5 truncate w-full">{p.name}</p>
+                    <p className="text-[10px] text-muted-text">{currency(p.price)}</p>
+                    <p className={`text-[9px] font-semibold mt-0.5 ${
+                      p.stock <= 0 ? 'text-red-600'
+                      : p.stock <= 5 ? 'text-amber-700'
+                      : 'text-green-700'
+                    }`}>
+                      {p.stock <= 0 ? 'Out' : `${p.stock} left`}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────
+         STAFF SECTION
+      ───────────────────────────────── */}
+      {activeSection === 'staff' && (
+        <div className="space-y-4">
+          {selectedUser && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-semibold shrink-0 ${roleConfig(selectedUser.role).bg} ${roleConfig(selectedUser.role).color}`}>
+                  {selectedUser.name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-text truncate">{selectedUser.name}</p>
+                    <span className={`shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${roleConfig(selectedUser.role).bg} ${roleConfig(selectedUser.role).color}`}>
+                      {roleLabel(selectedUser.role)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-text truncate">{selectedUser.email}</p>
+                  <p className="text-[11px] text-muted-text mt-1">
+                    {selectedUser.role === 'admin' ? 'Has full owner access'
+                      : selectedUser.role === 'manager' ? 'Can manage store operations'
+                      : selectedUser.role === 'employee' ? 'Limited staff permissions'
+                      : 'Regular customer account'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  aria-label="Close details"
+                  className="p-2 rounded-lg hover:bg-white text-gray-500 transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loadingOverview ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-white">
+                  <div className="skeleton w-12 h-12 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-4 w-32 rounded" />
+                    <div className="skeleton h-3 w-48 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (overview?.sellerVerification?.pending?.length || 0) === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white px-4 py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center mb-4">
+                <ShieldCheck className="w-8 h-8 text-green-500" />
+              </div>
+              <h3 className="text-lg font-bold text-text mb-1">All clear</h3>
+              <p className="text-sm text-muted-text max-w-xs mb-6">
+                No staff accounts pending review at the moment
+              </p>
+              <Link
+                to="/admin/store/access"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all"
+              >
+                <Shield className="w-4 h-4" />
+                Manage access
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(overview?.sellerVerification?.pending || []).map((staff) => {
+                const cfg = roleConfig(staff.role)
+                const Icon = cfg.icon
+                return (
+                  <div
+                    key={staff.id}
+                    className="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border border-border bg-white hover:shadow-sm transition-all"
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-semibold shrink-0 ${cfg.bg} ${cfg.color}`}>
+                      {staff.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-bold text-text truncate">{staff.name}</p>
+                        <span className={`shrink-0 inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                          <Icon className="w-2.5 h-2.5" />
+                          {roleLabel(staff.role)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-text truncate">{staff.email}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setSelectedUser(staff)}
+                        aria-label="View staff"
+                        className="p-2 rounded-lg text-muted-text hover:text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

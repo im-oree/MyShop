@@ -14,6 +14,7 @@ import messageRoutes from './routes/messages.js'
 import addressRoutes from './routes/addresses.js'
 import userRoutes from './routes/users.js'
 import adminRoutes from './routes/admin.js'
+import auditRoutes from './routes/audit.js'
 import cartRoutes from './routes/cart.js'
 
 export class App {
@@ -97,6 +98,7 @@ export class App {
     apiRouter.use('/addresses', authenticate, addressRoutes)
     apiRouter.use('/users', userRoutes)
     apiRouter.use('/admin', adminRoutes)
+    apiRouter.use('/audit', auditRoutes)
     apiRouter.use('/cart', authenticate, cartRoutes)
     
     this.app.use('/api', apiRouter)

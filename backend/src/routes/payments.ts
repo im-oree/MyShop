@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { sendSuccess, sendError } from '../utils/response.js'
 import { PaymentService } from '../services/index.js'
-import { orderService, productService, userService, emailService, notificationService } from '../services/index.js'
+import { orderService, userService, emailService, notificationService } from '../services/index.js'
 import { getFirestore } from '../config/firebase.js'
 import { authenticate, optionalAuth } from '../middlewares/index.js'
 import { PaymentStatus } from '../types/index.js'
@@ -111,29 +111,15 @@ router.post('/verify', optionalAuth, async (req: Request, res: Response) => {
             await emailService.sendPaymentConfirmation(order, buyer.email, buyer.name)
           }
 
-          // Send notifications to sellers
-          const itemsBySeller: Record<string, any[]> = {}
-          for (const item of order.items) {
-            const product = await productService.getById(item.productId)
-            if (product?.sellerId) {
-              if (!itemsBySeller[product.sellerId]) {
-                itemsBySeller[product.sellerId] = []
-              }
-              itemsBySeller[product.sellerId].push(product)
-            }
-          }
-          
-          // Send email to each seller
-          for (const [sellerId, sellerProducts] of Object.entries(itemsBySeller)) {
-            const seller = await userService.getById(sellerId)
-            if (seller?.email) {
-              await emailService.sendOrderNotificationToSeller(
-                order,
-                seller.email,
-                seller.name,
-                sellerProducts
-              )
-            }
+          // Send a single owner notification instead of splitting by seller
+          const owner = (await userService.getAll(1, 1000)).users.find(u => u.role === 'admin' || u.role === 'manager')
+          if (owner?.email) {
+            await emailService.sendOrderNotificationToSeller(
+              order,
+              owner.email,
+              owner.name,
+              order.items.map(item => ({ id: item.productId })) as any
+            )
           }
         } catch (emailError) {
           console.error('Error sending emails:', emailError)
@@ -158,60 +144,38 @@ router.post('/verify', optionalAuth, async (req: Request, res: Response) => {
             { orderId: order.id, reference }
           )
 
-          const itemsBySeller: Record<string, any[]> = {}
-          for (const item of order.items) {
-            const product = await productService.getById(item.productId)
-            if (product?.sellerId) {
-              if (!itemsBySeller[product.sellerId]) {
-                itemsBySeller[product.sellerId] = []
-              }
-              itemsBySeller[product.sellerId].push(item)
-            }
-          }
-
-          await Promise.all(Object.entries(itemsBySeller).map(async ([sellerId]) => {
+          const owner = (await userService.getAll(1, 1000)).users.find(u => u.role === 'admin' || u.role === 'manager')
+          if (owner) {
             await notificationService.createForUser(
-              sellerId,
-              'seller_order_received',
+              owner.id,
+              'order_created',
               'New order received',
-              `A new order #${order.id} includes products from your shop.`,
-              `/seller/orders/${order.id}`,
+              `A new order #${order.id} was placed in the store.`,
+              `/orders/${order.id}`,
               'important',
               { orderId: order.id, reference }
             )
-          }))
+          }
 
         } catch (notificationError) {
           console.error('Failed to create payment notifications:', notificationError)
         }
       })()
       
-      // Notify sellers / create seller order entries
+      // Create fulfillment record for the store owner
       try {
-        // group items by seller
         const db = getFirestore()
-        const itemsBySeller: Record<string, any[]> = {}
-        for (const it of order.items) {
-          const product = await productService.getById(it.productId)
-          const sellerId = product?.sellerId || 'unknown'
-          if (!itemsBySeller[sellerId]) itemsBySeller[sellerId] = []
-          itemsBySeller[sellerId].push({ ...it, orderId: order.id })
-        }
-
-        for (const sellerId of Object.keys(itemsBySeller)) {
-          const docRef = db.collection('sellerOrders').doc()
-          await docRef.set({
-            id: docRef.id,
-            sellerId,
-            orderId: order.id,
-            items: itemsBySeller[sellerId],
-            status: 'pending',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-        }
+        const docRef = db.collection('ownerOrders').doc()
+        await docRef.set({
+          id: docRef.id,
+          orderId: order.id,
+          items: order.items.map(item => ({ ...item, orderId: order.id })),
+          status: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
       } catch (e) {
-        console.error('Failed to create seller orders:', e)
+        console.error('Failed to create owner order record:', e)
       }
     }
 

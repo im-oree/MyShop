@@ -30,15 +30,28 @@ async function canReadMessages(userId: string): Promise<boolean> {
   return false
 }
 
-/**
- * Get the business admin user for routing messages about products/orders
- */
 async function getAdminUser(): Promise<string | null> {
   const { users } = await userService.getAll(1, 1000)
   const admin = users.find(u => u.role === 'admin' || u.role === 'manager')
   return admin?.id || null
 }
 
+/** Mark all messages in a conversation as read for the actor (updates lastReadBy map). */
+async function markConversationRead(conversationId: string, userId: string) {
+  const db = getFirestore()
+  const ref = db.collection('conversations').doc(conversationId)
+  await ref.set(
+    {
+      lastReadBy: { [userId]: new Date() },
+      updatedAt: new Date(),
+    },
+    { merge: true }
+  )
+}
+
+/* ─────────────────────────────────────────
+   START CONVERSATION
+───────────────────────────────────────── */
 router.post('/conversations/start', authenticate, async (req: Request, res: Response) => {
   try {
     const actorId = req.userId!
@@ -64,7 +77,6 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
         sendError(res, 'Product not found', 404)
         return
       }
-      // Route to admin for product-related messages
       const admin = await getAdminUser()
       if (!admin) {
         sendError(res, 'Admin user not found', 500)
@@ -81,7 +93,6 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
         sendError(res, 'Order not found', 404)
         return
       }
-      // Route to admin for order-related messages
       const admin = await getAdminUser()
       if (!admin) {
         sendError(res, 'Admin user not found', 500)
@@ -96,7 +107,6 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
       sendError(res, 'Target user is required', 400)
       return
     }
-
     if (resolvedTargetUserId === actorId) {
       sendError(res, 'Cannot create conversation with yourself', 400)
       return
@@ -134,6 +144,7 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
       lastMessage: '',
       lastMessageAt: null,
       lastMessageBy: null,
+      lastReadBy: { [actorId]: now }, // creator has nothing unread
       createdAt: now,
       updatedAt: now,
     }
@@ -146,6 +157,9 @@ router.post('/conversations/start', authenticate, async (req: Request, res: Resp
   }
 })
 
+/* ─────────────────────────────────────────
+   LIST CONVERSATIONS (with per-conversation unreadCount)
+───────────────────────────────────────── */
 router.get('/conversations', authenticate, async (req: Request, res: Response) => {
   try {
     const actorId = req.userId!
@@ -164,7 +178,28 @@ router.get('/conversations', authenticate, async (req: Request, res: Response) =
       .get()
 
     const all = snapshot.docs.map(doc => doc.data() as any)
-      .sort((a, b) => new Date(b.updatedAt as any).getTime() - new Date(a.updatedAt as any).getTime())
+
+    // Compute unreadCount for each conversation
+    await Promise.all(all.map(async (c) => {
+      const lastReadAt = c.lastReadBy?.[actorId]
+        ? new Date(c.lastReadBy[actorId])
+        : new Date(0)
+
+      const msgs = await db.collection('messages')
+        .where('conversationId', '==', c.id)
+        .get()
+
+      c.unreadCount = msgs.docs.filter(d => {
+        const m = d.data() as any
+        if (m.senderId === actorId) return false
+        const created = new Date(m.createdAt)
+        return created > lastReadAt
+      }).length
+    }))
+
+    all.sort((a, b) =>
+      new Date(b.updatedAt as any).getTime() - new Date(a.updatedAt as any).getTime()
+    )
 
     const start = (page - 1) * limit
     sendPaginated(res, all.slice(start, start + limit), all.length, page, limit)
@@ -174,6 +209,52 @@ router.get('/conversations', authenticate, async (req: Request, res: Response) =
   }
 })
 
+/* ─────────────────────────────────────────
+   UNREAD COUNT (total across all conversations)
+───────────────────────────────────────── */
+router.get('/unread-count', authenticate, async (req: Request, res: Response) => {
+  try {
+    const actorId = req.userId!
+    const readable = await canReadMessages(actorId)
+    if (!readable) {
+      sendSuccess(res, { count: 0 }, 'OK')
+      return
+    }
+
+    const db = getFirestore()
+    const convoSnap = await db.collection('conversations')
+      .where('participants', 'array-contains', actorId)
+      .get()
+
+    let total = 0
+    await Promise.all(convoSnap.docs.map(async (doc) => {
+      const c = doc.data() as any
+      const lastReadAt = c.lastReadBy?.[actorId]
+        ? new Date(c.lastReadBy[actorId])
+        : new Date(0)
+
+      const msgs = await db.collection('messages')
+        .where('conversationId', '==', c.id)
+        .get()
+
+      total += msgs.docs.filter(d => {
+        const m = d.data() as any
+        if (m.senderId === actorId) return false
+        const created = new Date(m.createdAt)
+        return created > lastReadAt
+      }).length
+    }))
+
+    sendSuccess(res, { count: total }, 'OK')
+  } catch (error) {
+    console.error('Unread count error:', error)
+    sendError(res, String(error), 500, 'Failed to fetch unread count')
+  }
+})
+
+/* ─────────────────────────────────────────
+   GET MESSAGES (auto-marks as read)
+───────────────────────────────────────── */
 router.get('/conversations/:id/messages', authenticate, async (req: Request, res: Response) => {
   try {
     const actorId = req.userId!
@@ -198,12 +279,21 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
 
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 50
-    const snapshot = await db.collection('messages').where('conversationId', '==', req.params.id).get()
+    const snapshot = await db.collection('messages')
+      .where('conversationId', '==', req.params.id)
+      .get()
+
     const all = snapshot.docs.map(doc => doc.data() as any)
-      .sort((a, b) => new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime())
+      .sort((a, b) =>
+        new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime()
+      )
 
     const start = Math.max(0, all.length - page * limit)
     const end = all.length - (page - 1) * limit
+
+    // Mark as read for actor (fire-and-forget)
+    void markConversationRead(req.params.id, actorId)
+
     sendPaginated(res, all.slice(start, end), all.length, page, limit)
   } catch (error) {
     console.error('Get conversation messages error:', error)
@@ -211,6 +301,41 @@ router.get('/conversations/:id/messages', authenticate, async (req: Request, res
   }
 })
 
+/* ─────────────────────────────────────────
+   MARK CONVERSATION AS READ (explicit)
+───────────────────────────────────────── */
+router.post('/conversations/:id/read', authenticate, async (req: Request, res: Response) => {
+  try {
+    const actorId = req.userId!
+    const readable = await canReadMessages(actorId)
+    if (!readable) {
+      sendError(res, 'Insufficient message permissions', 403)
+      return
+    }
+
+    const db = getFirestore()
+    const convoDoc = await db.collection('conversations').doc(req.params.id).get()
+    if (!convoDoc.exists) {
+      sendError(res, 'Conversation not found', 404)
+      return
+    }
+    const convo = convoDoc.data() as any
+    if (!(convo.participants || []).includes(actorId)) {
+      sendError(res, 'Unauthorized', 403)
+      return
+    }
+
+    await markConversationRead(req.params.id, actorId)
+    sendSuccess(res, { ok: true }, 'Marked as read')
+  } catch (error) {
+    console.error('Mark read error:', error)
+    sendError(res, String(error), 500, 'Failed to mark as read')
+  }
+})
+
+/* ─────────────────────────────────────────
+   SEND MESSAGE
+───────────────────────────────────────── */
 router.post('/conversations/:id/messages', authenticate, async (req: Request, res: Response) => {
   try {
     const actorId = req.userId!
@@ -252,10 +377,15 @@ router.post('/conversations/:id/messages', authenticate, async (req: Request, re
     }
 
     await db.collection('messages').doc(id).set(message)
+
+    // Sender's own send counts as "read up to now" for themselves
+    const lastReadBy = { ...(convo.lastReadBy || {}), [actorId]: now }
+
     await convoRef.update({
       lastMessage: message.body,
       lastMessageAt: now,
       lastMessageBy: actorId,
+      lastReadBy,
       updatedAt: now,
     })
 

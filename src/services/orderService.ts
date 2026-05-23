@@ -21,26 +21,11 @@ export const orderService = {
     const { data } = await apiClient.get(`/orders/${id}`)
     return data.data
   },
-
-  // Get seller orders (for sellers)
-  async getSellerOrders(page: number = 1, limit: number = 20, query: string = '') {
-    const { data } = await apiClient.get('/orders/seller', {
-      params: { page, limit, q: query },
-    })
-    // Normalize paginated response to { orders, total, page, limit, pages }
-    const payload = data.data || {}
-    return {
-      orders: payload.items || [],
-      total: payload.total || 0,
-      page: payload.page || page,
-      limit: payload.limit || limit,
-      pages: payload.pages || 0,
-    }
-  },
-
-  async getSellerOrderById(id: string) {
-    const { data } = await apiClient.get(`/orders/seller/${id}`)
-    return data.data
+  
+  // Get count of incomplete orders
+  async getIncompleteCount() {
+    const { data } = await apiClient.get('/orders/incomplete/count')
+    return data.data || 0
   },
   
   // Update order status (admin)

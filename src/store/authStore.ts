@@ -1,11 +1,25 @@
 import { create } from 'zustand'
 import { User } from '@/types'
 
+function getStoredViewMode(): 'customer' | 'staff' | null {
+  const value = localStorage.getItem('viewMode')
+  if (value === 'customer' || value === 'staff') return value
+  return null
+}
+
+function getDefaultViewMode(user: User | null): 'customer' | 'staff' {
+  if (user?.role === 'admin' || user?.role === 'manager') {
+    return getStoredViewMode() || 'staff'
+  }
+  return 'customer'
+}
+
 interface AuthStore {
   user: User | null
   isAuthenticated: boolean
   loading: boolean
   currentRole: 'user' | 'admin' | 'manager' | 'employee' | null
+  viewMode: 'customer' | 'staff'
   token: string | null
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
@@ -13,6 +27,10 @@ interface AuthStore {
   logout: () => void
   isAdmin: () => boolean
   isManager: () => boolean
+  toggleViewMode: () => void
+  setViewMode: (mode: 'customer' | 'staff') => void
+  isProductFormOpen: boolean
+  setProductFormOpen: (open: boolean) => void
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -20,7 +38,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isAuthenticated: false,
   loading: true,
   currentRole: null,
+  viewMode: 'customer',
   token: null,
+  isProductFormOpen: false,
   
   setUser: (user: User | null) => {
     set({
@@ -28,6 +48,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       isAuthenticated: !!user,
       loading: false,
       currentRole: user?.role || null,
+      viewMode: getDefaultViewMode(user),
     })
   },
 
@@ -47,6 +68,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       isAuthenticated: true,
       loading: false,
       currentRole: user?.role || null,
+      viewMode: getDefaultViewMode(user),
     })
     localStorage.setItem('authToken', token)
   },
@@ -56,6 +78,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       user: null,
       isAuthenticated: false,
       currentRole: null,
+      viewMode: 'customer',
       token: null,
       loading: false,
     })
@@ -70,5 +93,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isManager: () => {
     const { user } = get()
     return user?.role === 'manager' || user?.role === 'admin'
+  },
+
+  setViewMode: (mode: 'customer' | 'staff') => {
+    set({ viewMode: mode })
+    localStorage.setItem('viewMode', mode)
+  },
+
+  setProductFormOpen: (open: boolean) => {
+    set({ isProductFormOpen: open })
+  },
+
+  toggleViewMode: () => {
+    const { user, viewMode } = get()
+    if (user?.role !== 'admin' && user?.role !== 'manager') return
+    const nextMode = viewMode === 'staff' ? 'customer' : 'staff'
+    set({ viewMode: nextMode })
+    localStorage.setItem('viewMode', nextMode)
   },
 }))

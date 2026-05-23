@@ -35,7 +35,30 @@ export class ProductService {
    */
   async getById(id: string): Promise<Product | null> {
     const doc = await this.db.collection(this.collection).doc(id).get()
-    return doc.exists ? (doc.data() as Product) : null
+    if (doc.exists) {
+      const data = doc.data() as Product
+      return {
+        ...data,
+        id: data.id || doc.id,
+        productType: data.productType || 'physical',
+      }
+    }
+
+    // Backward compatibility for records where Firestore doc ID and payload id differ.
+    const byPayloadId = await this.db
+      .collection(this.collection)
+      .where('id', '==', id)
+      .limit(1)
+      .get()
+
+    if (byPayloadId.empty) return null
+    const fallbackDoc = byPayloadId.docs[0]
+    const fallbackData = fallbackDoc.data() as Product
+    return {
+      ...fallbackData,
+      id: fallbackData.id || fallbackDoc.id,
+      productType: fallbackData.productType || 'physical',
+    }
   }
   
   /**
@@ -45,6 +68,7 @@ export class ProductService {
     category?: string
     featured?: boolean
     search?: string
+    productType?: 'physical' | 'service' | 'downloadable'
   }): Promise<{ products: Product[]; total: number }> {
     let query = this.db.collection(this.collection)
     
@@ -55,6 +79,10 @@ export class ProductService {
     if (filters?.featured === true) {
       query = (query as any).where('featured', '==', true)
     }
+
+    if (filters?.productType) {
+      query = (query as any).where('productType', '==', filters.productType)
+    }
     
     const total = (await query.count().get()).data().count
     
@@ -64,7 +92,14 @@ export class ProductService {
       .limit(limit)
       .get()
     
-    const products = snapshot.docs.map(doc => doc.data() as Product)
+    const products = snapshot.docs.map(doc => {
+      const data = doc.data() as Product
+      return {
+        ...data,
+        id: data.id || doc.id,
+        productType: data.productType || 'physical',
+      }
+    })
     
     // Filter by search if provided
     if (filters?.search) {
@@ -93,7 +128,14 @@ export class ProductService {
       .limit(limit)
       .get()
     
-    const products = snapshot.docs.map(doc => doc.data() as Product)
+    const products = snapshot.docs.map(doc => {
+      const data = doc.data() as Product
+      return {
+        ...data,
+        id: data.id || doc.id,
+        productType: data.productType || 'physical',
+      }
+    })
     
     return products.filter(p =>
       p.name.toLowerCase().includes(queryLower) ||
@@ -144,7 +186,14 @@ export class ProductService {
       .limit(limit)
       .get()
     
-    return snapshot.docs.map(doc => doc.data() as Product)
+    return snapshot.docs.map(doc => {
+      const data = doc.data() as Product
+      return {
+        ...data,
+        id: data.id || doc.id,
+        productType: data.productType || 'physical',
+      }
+    })
   }
   
   /**
@@ -157,7 +206,14 @@ export class ProductService {
       .limit(limit)
       .get()
     
-    return snapshot.docs.map(doc => doc.data() as Product)
+    return snapshot.docs.map(doc => {
+      const data = doc.data() as Product
+      return {
+        ...data,
+        id: data.id || doc.id,
+        productType: data.productType || 'physical',
+      }
+    })
   }
 
   /**

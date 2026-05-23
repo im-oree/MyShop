@@ -653,8 +653,8 @@ function MessagesPage() {
       return
     }
 
-    navigate(user?.role === 'seller' ? '/seller/shop' : '/')
-  }, [navigate, user?.role])
+    navigate('/')
+  }, [navigate])
 
   const sendMessage = useCallback(async () => {
     if (!draft.trim() || !activeConversationId || sending) return

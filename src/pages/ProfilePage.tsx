@@ -413,14 +413,14 @@ function ProfilePage() {
   const shopNameId = useId()
   const shopDescId = useId()
 
-  const isSeller = user?.role === 'seller'
+  const isSeller = user?.role === 'admin' || user?.role === 'manager'
   const isEmployee = user?.role === 'employee'
   const isPending = user?.appliedAsSeller && !user?.sellerApproved
   const memberSince = user?.createdAt ? formatDate(user.createdAt) : ''
 
   const canManageAccess = useMemo(() => {
     if (!user) return false
-    if (user.role === 'seller') return true
+    if (user.role === 'admin' || user.role === 'manager') return true
     if (user.role === 'employee') {
       const perms = getEffectivePermissions(user)
       return hasAccess(perms.employees, 'write')
@@ -737,20 +737,20 @@ function ProfilePage() {
                                 : 'bg-primary/5 text-primary'
                           }`}
                         >
-                          {isSeller ? 'Seller' : isEmployee ? 'Employee' : 'Customer'}
+                          {isSeller ? 'Store Manager' : isEmployee ? 'Employee' : 'Customer'}
                         </span>
                       }
                     />
                   </div>
                 </Section>
 
-                {/* Seller Shop Section */}
+                {/* Store Management Section */}
                 {isSeller && user.sellerProfile && (
                   <Section
-                    title="My Shop"
+                    title="Store"
                     action={
                       <Link
-                        to="/seller/shop"
+                        to="/admin/store"
                         className="text-xs font-medium text-primary hover:underline underline-offset-2 flex items-center gap-1"
                       >
                         Manage →
@@ -799,26 +799,26 @@ function ProfilePage() {
 
               {/* Right column — Actions & Links */}
               <div className="lg:col-span-2 space-y-5">
-                {/* Seller Management Links (only for sellers/employees with access) */}
+                {/* Store Management Links */}
                 {(isSeller || isEmployee) && (
-                  <Section title="Seller Tools" noPadding>
+                  <Section title="Store Tools" noPadding>
                     <div className="divide-y divide-border/50">
                       <QuickLinkItem
-                        to="/seller/shop"
+                        to="/admin/store"
                         icon={Icons.shop}
-                        label="My Shop"
+                        label="Store Hub"
                         description="Manage shop settings and profile"
                         accent="bg-primary/5 text-primary"
                       />
                       <QuickLinkItem
-                        to="/seller/orders"
+                        to="/admin/store/orders"
                         icon={Icons.bolt}
-                        label="Seller Orders"
+                        label="Store Orders"
                         description="View and manage customer orders"
                         accent="bg-amber-50 text-amber-600"
                       />
                       <QuickLinkItem
-                        to="/seller/products"
+                        to="/admin/store/products"
                         icon={Icons.products}
                         label="Products"
                         description="Manage your product listings"
@@ -826,7 +826,7 @@ function ProfilePage() {
                       />
                       {canManageAccess && (
                         <QuickLinkItem
-                          to="/seller/access"
+                          to="/admin/store/access"
                           icon={Icons.team}
                           label="Team & Access"
                           description="Manage employees and permissions"
@@ -1041,10 +1041,10 @@ function ProfilePage() {
                         <p className="text-xs text-green-700">Your shop is live</p>
                       </div>
                       <button
-                        onClick={() => navigate('/seller/shop')}
+                        onClick={() => navigate('/admin/store')}
                         className="shrink-0 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-green-700 active:scale-[0.98] transition-all"
                       >
-                        My Shop
+                        Open Store
                       </button>
                     </div>
                   </div>

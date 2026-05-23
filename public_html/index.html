@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyShop — Modern E-Commerce Platform | Hex Interractive</title>
+  <meta name="description" content="MyShop is a powerful, role-aware e-commerce platform with customer shopping, staff management, real-time messaging, analytics, and more. Built by Hex Interractive." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </div>
+        My<span>Shop</span>
+      </a>
+
+      <nav class="nav">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="features.html" class="nav-link">Features</a>
+        <a href="screenshots.html" class="nav-link">Screenshots</a>
+        <a href="pricing.html" class="nav-link">Pricing</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+        <a href="contact.html" class="btn btn-primary btn-sm nav-cta">Get Started</a>
+      </nav>
+
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+    <div class="mobile-nav">
+      <a href="index.html" class="mobile-nav-link active">Home</a>
+      <a href="features.html" class="mobile-nav-link">Features</a>
+      <a href="screenshots.html" class="mobile-nav-link">Screenshots</a>
+      <a href="pricing.html" class="mobile-nav-link">Pricing</a>
+      <a href="about.html" class="mobile-nav-link">About</a>
+      <a href="contact.html" class="mobile-nav-link">Contact</a>
+      <div class="mobile-nav-cta">
+        <a href="contact.html" class="btn btn-primary" style="width:100%">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-bg-gradient hero-bg-1"></div>
+      <div class="hero-bg-gradient hero-bg-2"></div>
+      <div class="hero-bg-gradient hero-bg-3"></div>
+      <div class="hero-grid"></div>
+    </div>
+
+    <div class="container hero-inner">
+      <div class="hero-content reveal-left">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          Built by Hex Interractive
+        </div>
+        <h1 class="heading-xl hero-title">
+          An Online Store <span class="text-gradient">Built For Your Business</span>
+        </h1>
+        <p class="subtitle hero-subtitle">
+          MyShop is a simple, complete online store platform. Let customers shop and pay securely, give your team tools to manage orders, and get real-time insights into sales. Fully customizable — we'll build exactly what you need.
+        </p>
+        <div class="btn-group">
+          <a href="contact.html" class="btn btn-primary btn-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            Get Started
+          </a>
+          <a href="features.html" class="btn btn-secondary btn-lg">
+            Explore Features
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-value" data-count="50" data-suffix="+">0+</div>
+            <div class="hero-stat-label">Built-in Features</div>
+          </div>
+          <div>
+            <div class="hero-stat-value" data-count="100" data-suffix="%">0%</div>
+            <div class="hero-stat-label">Fully Customizable</div>
+          </div>
+          <div>
+            <div class="hero-stat-value" data-count="4" data-suffix="">0</div>
+            <div class="hero-stat-label">Starting Plans</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal-right">
+        <div class="hero-phone-mockup">
+          <div class="hero-phone-frame">
+            <div class="hero-phone-screen">
+              <img src="https://i.ibb.co/9mRdkVSR/Screenshot-2026-05-22-204825.png" alt="MyShop Home Screen" loading="eager" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-floating-card hero-floating-card-1" style="animation-delay: 0s;">
+          <div class="float-card-icon green">📦</div>
+          <div class="float-card-title">Order Placed</div>
+          <div class="float-card-value">Real-time tracking</div>
+        </div>
+
+        <div class="hero-floating-card hero-floating-card-2" style="animation-delay: 2s;">
+          <div class="float-card-icon amber">💳</div>
+          <div class="float-card-title">Secure Payment</div>
+          <div class="float-card-value">Paystack integrated</div>
+        </div>
+
+        <div class="hero-floating-card hero-floating-card-3" style="animation-delay: 4s;">
+          <div class="float-card-icon blue">📊</div>
+          <div class="float-card-title">Analytics</div>
+          <div class="float-card-value">Live dashboards</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH TICKER -->
+  <section class="trusted-section">
+    <div class="container">
+      <div class="trusted-label">Powered By Modern Technologies</div>
+      <div class="tech-ticker">
+        <div class="tech-item">⚛️ React 18</div>
+        <div class="tech-item">📘 TypeScript</div>
+        <div class="tech-item">⚡ Vite</div>
+        <div class="tech-item">🟢 Node.js</div>
+        <div class="tech-item">🔥 Firebase</div>
+        <div class="tech-item">💳 Paystack</div>
+        <div class="tech-item">🎨 Tailwind CSS</div>
+        <div class="tech-item">📊 Recharts</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES OVERVIEW -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">✨ Features</div>
+        <h2 class="heading-lg reveal">Everything You Need to <span class="text-gradient">Sell Online</span></h2>
+        <p class="subtitle subtitle-center reveal">From product management to payment processing, MyShop provides a complete toolkit for running your online store.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card reveal stagger-1">
+          <div class="feature-icon">🛒</div>
+          <div class="feature-title">Smart Shopping Cart</div>
+          <div class="feature-desc">Full-featured cart with quantity management, real-time sync, subtotal calculations, and seamless checkout flow.</div>
+        </div>
+        <div class="feature-card reveal stagger-2">
+          <div class="feature-icon amber">💳</div>
+          <div class="feature-title">Secure Payments</div>
+          <div class="feature-desc">Integrated Paystack payment processing with automatic verification, webhooks, and order status updates.</div>
+        </div>
+        <div class="feature-card reveal stagger-3">
+          <div class="feature-icon blue">📦</div>
+          <div class="feature-title">Order Tracking</div>
+          <div class="feature-desc">Complete order lifecycle from placement to delivery with real-time stage tracking and timeline visualization.</div>
+        </div>
+        <div class="feature-card reveal stagger-4">
+          <div class="feature-icon purple">👥</div>
+          <div class="feature-title">Role-Based Access</div>
+          <div class="feature-desc">Four distinct user roles — Guest, User, Employee, Admin — each with granular permission controls.</div>
+        </div>
+        <div class="feature-card reveal stagger-5">
+          <div class="feature-icon rose">💬</div>
+          <div class="feature-title">Real-Time Messaging</div>
+          <div class="feature-desc">In-app messaging system with conversation threads, read markers, and live updates for customer support.</div>
+        </div>
+        <div class="feature-card reveal stagger-6">
+          <div class="feature-icon teal">📊</div>
+          <div class="feature-title">Analytics Dashboard</div>
+          <div class="feature-desc">Revenue trends, order metrics, inventory insights, category breakdowns, and top-performing products at a glance.</div>
+        </div>
+      </div>
+
+      <div class="text-center" style="margin-top: 48px;">
+        <a href="features.html" class="btn btn-outline reveal">
+          View All Features
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOTS -->
+  <section class="section screenshots-section" id="screenshots">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">📱 App Preview</div>
+        <h2 class="heading-lg reveal">Beautiful on <span class="text-gradient">Every Screen</span></h2>
+        <p class="subtitle subtitle-center reveal">MyShop is fully responsive — optimized for mobile, tablet, and desktop with a stunning modern interface.</p>
+      </div>
+    </div>
+
+    <div class="screenshots-track-wrapper">
+      <div class="screenshots-track">
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/9mRdkVSR/Screenshot-2026-05-22-204825.png" alt="Home Screen" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Home</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/qwnfc4z/Screenshot-2026-05-22-204849.png" alt="Product Catalog" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Products</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/pqD2LNL/Screenshot-2026-05-22-204901.png" alt="Product Detail" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Product Detail</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/GfRzCvy6/Screenshot-2026-05-22-204920.png" alt="Cart" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Cart</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/39z0MJdD/Screenshot-2026-05-22-204950.png" alt="Checkout" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Checkout</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/g1d8vPc/Screenshot-2026-05-22-205010.png" alt="Orders" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Orders</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/8DZgPv2Q/Screenshot-2026-05-22-205023.png" alt="Profile" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Profile</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/V05R9j9s/Screenshot-2026-05-22-205034.png" alt="Messages" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Messages</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/LXB1CwZ2/Screenshot-2026-05-22-205044.png" alt="Admin Dashboard" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Admin</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/4gPYyPpK/Screenshot-2026-05-22-205127.png" alt="Analytics" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Analytics</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/60CzR2KS/Screenshot-2026-05-22-205153.png" alt="Product Management" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Management</div>
+        </div>
+        <div class="screenshot-item">
+          <div class="screenshot-phone">
+            <div class="screenshot-screen">
+              <img src="https://i.ibb.co/B2hSM6TH/Screenshot-2026-05-22-205217.png" alt="Notifications" loading="lazy" />
+            </div>
+          </div>
+          <div class="screenshot-label">Notifications</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshots-nav">
+      <button class="carousel-prev" aria-label="Previous">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="carousel-next" aria-label="Next">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- PRODUCT TYPES -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">📦 Product Types</div>
+        <h2 class="heading-lg reveal">Sell <span class="text-gradient">Anything</span> Online</h2>
+        <p class="subtitle subtitle-center reveal">MyShop supports three distinct product types, each with tailored management features.</p>
+      </div>
+
+      <div class="product-types-grid">
+        <div class="product-type-card reveal stagger-1">
+          <div class="product-type-icon">📦</div>
+          <div class="product-type-title">Physical Products</div>
+          <div class="product-type-desc">Traditional shippable goods with full inventory tracking and shipping management.</div>
+          <ul class="product-type-features">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Stock & inventory management
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Multiple product images
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Shipping address integration
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Low stock alerts
+            </li>
+          </ul>
+        </div>
+
+        <div class="product-type-card reveal stagger-2">
+          <div class="product-type-icon">🛠️</div>
+          <div class="product-type-title">Services</div>
+          <div class="product-type-desc">Offer professional services with booking details, turnaround times, and delivery modes.</div>
+          <ul class="product-type-features">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Delivery mode configuration
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Duration & turnaround time
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Booking notes support
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Virtual availability
+            </li>
+          </ul>
+        </div>
+
+        <div class="product-type-card reveal stagger-3">
+          <div class="product-type-icon">⬇️</div>
+          <div class="product-type-title">Downloadables</div>
+          <div class="product-type-desc">Sell digital assets and files with download URLs, file info, and license management.</div>
+          <ul class="product-type-features">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Secure download URLs
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              File format & size info
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              License information
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Instant delivery
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" style="background: var(--bg-alt);">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">🚀 How It Works</div>
+        <h2 class="heading-lg reveal">Up and Running in <span class="text-gradient">Minutes</span></h2>
+        <p class="subtitle subtitle-center reveal">Get your online store set up quickly with our streamlined onboarding process.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal stagger-1">
+          <div class="step-number">1</div>
+          <div class="step-title">Deploy & Configure</div>
+          <div class="step-desc">Set up your frontend and backend with environment variables and connect your Firebase project.</div>
+        </div>
+        <div class="step-card reveal stagger-2">
+          <div class="step-number">2</div>
+          <div class="step-title">Add Products</div>
+          <div class="step-desc">Create products with images, pricing, categories, and inventory. Support for physical goods, services, and downloads.</div>
+        </div>
+        <div class="step-card reveal stagger-3">
+          <div class="step-number">3</div>
+          <div class="step-title">Configure Payments</div>
+          <div class="step-desc">Connect Paystack for secure payment processing with automatic verification and webhook support.</div>
+        </div>
+        <div class="step-card reveal stagger-4">
+          <div class="step-number">4</div>
+          <div class="step-title">Start Selling</div>
+          <div class="step-desc">Your store is live! Customers can browse, shop, and pay. Track everything from your admin dashboard.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">👥 User Roles</div>
+        <h2 class="heading-lg reveal">Built for <span class="text-gradient">Every Team Member</span></h2>
+        <p class="subtitle subtitle-center reveal">Granular role-based access control ensures everyone has exactly the permissions they need.</p>
+      </div>
+
+      <div class="roles-grid">
+        <div class="role-card reveal stagger-1">
+          <div class="role-icon">👤</div>
+          <div>
+            <div class="role-title">Customer</div>
+            <div class="role-desc">Browse products, manage cart, place orders, track shipments, manage addresses, receive notifications, and message support.</div>
+          </div>
+        </div>
+        <div class="role-card reveal stagger-2">
+          <div class="role-icon">🛡️</div>
+          <div>
+            <div class="role-title">Admin</div>
+            <div class="role-desc">Full store control including business configuration, staff management, revenue analytics, audit logs, and all operational tools.</div>
+          </div>
+        </div>
+        <div class="role-card reveal stagger-3">
+          <div class="role-icon">📋</div>
+          <div>
+            <div class="role-title">Manager</div>
+            <div class="role-desc">Store operations management with access to products, orders, employees, analytics, and messaging — scoped by role permissions.</div>
+          </div>
+        </div>
+        <div class="role-card reveal stagger-4">
+          <div class="role-icon">🔧</div>
+          <div>
+            <div class="role-title">Employee</div>
+            <div class="role-desc">Template-based or custom permissions across products, orders, analytics, notifications, messages, and employee management modules.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEVICE SUPPORT -->
+  <section class="section" style="background: var(--bg-alt);">
+    <div class="container text-center">
+      <div class="section-label reveal">💻 Responsive Design</div>
+      <h2 class="heading-lg reveal">Works on <span class="text-gradient">Every Device</span></h2>
+      <p class="subtitle subtitle-center reveal">MyShop is built mobile-first and adapts beautifully to phones, tablets, and desktops.</p>
+
+      <div class="responsive-badges reveal">
+        <div class="responsive-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Mobile
+        </div>
+        <div class="responsive-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Tablet
+        </div>
+        <div class="responsive-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Desktop
+        </div>
+      </div>
+
+      <div class="devices-visual reveal-scale">
+        <div class="device-phone">
+          <div class="device-phone-screen">
+            <img src="https://i.ibb.co/9mRdkVSR/Screenshot-2026-05-22-204825.png" alt="Mobile view" loading="lazy" />
+          </div>
+        </div>
+        <div class="device-desktop">
+          <div class="device-desktop-screen">
+            <div class="device-desktop-inner">
+              <img src="https://i.ibb.co/4gPYyPpK/Screenshot-2026-05-22-205127.png" alt="Desktop view" loading="lazy" />
+            </div>
+          </div>
+          <div class="device-desktop-stand"></div>
+          <div class="device-desktop-base"></div>
+        </div>
+        <div class="device-phone">
+          <div class="device-phone-screen">
+            <img src="https://i.ibb.co/qwnfc4z/Screenshot-2026-05-22-204849.png" alt="Mobile view" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-label reveal">❓ FAQ</div>
+        <h2 class="heading-lg reveal">Frequently Asked <span class="text-gradient">Questions</span></h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item reveal stagger-1">
+          <div class="faq-question">
+            What is MyShop?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              MyShop is a full-featured, role-aware e-commerce platform built with React, TypeScript, and Node.js. It supports customer shopping, payment processing through Paystack, order tracking, staff management with granular permissions, real-time messaging, analytics dashboards, and much more.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal stagger-2">
+          <div class="faq-question">
+            What payment methods are supported?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              MyShop currently integrates with Paystack for payment processing, which supports cards, bank transfers, USSD, and mobile money across Nigeria and other supported regions. The backend architecture also includes abstraction for future payment provider additions.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal stagger-3">
+          <div class="faq-question">
+            Is MyShop mobile-friendly?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Absolutely! MyShop is built with a mobile-first design approach. Every page, from the storefront to the admin dashboard, is fully responsive and optimized for phones, tablets, and desktops. The messaging interface adapts between stacked mobile and two-pane desktop layouts.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal stagger-4">
+          <div class="faq-question">
+            Can I sell digital products and services?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes! MyShop supports three product types: physical products with inventory tracking, services with booking details and turnaround times, and downloadable digital products with file management and license information. Each type has tailored management features.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal stagger-5">
+          <div class="faq-question">
+            How does staff access control work?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              MyShop features a comprehensive RBAC (Role-Based Access Control) system. Admins can assign employees predefined role templates (cashier, sales rep, support agent, operations manager) or create custom permission sets. Permissions cover products, orders, analytics, notifications, messages, and employee management with none, read, or write access levels.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal stagger-6">
+          <div class="faq-question">
+            Can I customize the store branding?
+            <span class="faq-toggle">+</span>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. MyShop includes a business configuration system where admins can set the store name, logo, description, contact details, social media links, brand colors, and feature toggles. These settings are managed through the admin panel and stored in the backend.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta-section">
+    <div class="container">
+      <div class="cta-inner reveal-scale">
+        <h2 class="cta-title">Ready to Launch Your Store?</h2>
+        <p class="cta-desc">Get MyShop for your business and start selling online with a powerful, modern e-commerce platform built for growth.</p>
+        <div class="cta-buttons">
+          <a href="contact.html" class="btn btn-white btn-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Contact Us
+          </a>
+          <a href="features.html" class="btn btn-ghost btn-lg">
+            Learn More
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo" style="color: #fff;">
+            <div class="logo-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            </div>
+            My<span style="color: #94a3b8;">Shop</span>
+          </a>
+          <p>A complete e-commerce and store-operations system built by Hex Interractive. Modern, responsive, and powerful.</p>
+          <div class="footer-social">
+            <a href="https://hex-interractive.vercel.app/" target="_blank" rel="noopener" aria-label="Website">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            </a>
+            <a href="mailto:daragood67@gmail.com" aria-label="Email">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </a>
+            <a href="https://ore-port-folio.vercel.app/" target="_blank" rel="noopener" aria-label="Portfolio">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="footer-heading">Pages</div>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="screenshots.html">Screenshots</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">Company</div>
+          <ul class="footer-links">
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="https://hex-interractive.vercel.app/" target="_blank" rel="noopener">Hex Interractive</a></li>
+            <li><a href="https://ore-port-folio.vercel.app/" target="_blank" rel="noopener">Developer</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">Contact</div>
+          <ul class="footer-links">
+            <li><a href="mailto:daragood67@gmail.com">daragood67@gmail.com</a></li>
+            <li><a href="https://hex-interractive.vercel.app/" target="_blank" rel="noopener">hex-interractive.vercel.app</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 MyShop by <a href="https://hex-interractive.vercel.app/" target="_blank" rel="noopener">Hex Interractive</a>. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

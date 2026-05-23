@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express'
 import { sendSuccess, sendError } from '../utils/response.js'
 import { authenticate, requireAdmin } from '../middlewares/index.js'
-import { userService, notificationService } from '../services/index.js'
+import { userService, notificationService, auditLogService } from '../services/index.js'
 import { EMPLOYEE_ROLE_TEMPLATES, normalizePermissions, resolveTemplatePermissions } from '../utils/rbac.js'
 
 const router = Router()
 
-async function requireAdmin(req: Request, res: Response) {
+async function requireStaffAdmin(req: Request, res: Response) {
   if (!req.userId) {
     sendError(res, 'Unauthorized', 401)
     return null
@@ -43,11 +43,11 @@ router.get('/employees', authenticate, async (req: Request, res: Response) => {
     console.error('Get employees error:', error)
     sendError(res, String(error), 500, 'Failed to fetch employees')
   }
-}))
+})
 
 router.post('/employees', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireAdmin(req, res)
+    const owner = await requireStaffAdmin(req, res)
     if (!owner) return
 
     const { email, title, template, permissions } = req.body
@@ -81,11 +81,24 @@ router.post('/employees', authenticate, async (req: Request, res: Response) => {
       target.id,
       'general',
       'You were added as an employee',
-      `You now have employee access for ${owner.sellerProfile?.shopName || owner.name}'s shop.`,
+      `You now have employee access for ${owner.name}'s store.`,
       '/seller/shop',
       'important',
       { sellerId: owner.id }
     )
+
+    // Audit log: employee assigned
+    void auditLogService.log({
+      actorId: owner.id,
+      actorName: owner.name,
+      actorRole: owner.role,
+      action: 'employee.assign',
+      resourceType: 'user',
+      resourceId: assigned.id,
+      meta: { title: assigned.employeeTitle, permissions: assigned.employeePermissions },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
 
     sendSuccess(res, assigned, 'Employee added successfully', 201)
   } catch (error) {
@@ -96,7 +109,7 @@ router.post('/employees', authenticate, async (req: Request, res: Response) => {
 
 router.patch('/employees/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireAdmin(req, res)
+    const owner = await requireStaffAdmin(req, res)
     if (!owner) return
 
     const { title, template, permissions } = req.body
@@ -111,6 +124,18 @@ router.patch('/employees/:id', authenticate, async (req: Request, res: Response)
       resolvedPermissions,
     )
 
+    void auditLogService.log({
+      actorId: owner.id,
+      actorName: owner.name,
+      actorRole: owner.role,
+      action: 'employee.update',
+      resourceType: 'user',
+      resourceId: updated.id,
+      meta: { title: updated.employeeTitle, permissions: updated.employeePermissions },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
     sendSuccess(res, updated, 'Employee access updated')
   } catch (error) {
     console.error('Update employee access error:', error)
@@ -120,10 +145,22 @@ router.patch('/employees/:id', authenticate, async (req: Request, res: Response)
 
 router.delete('/employees/:id', authenticate, async (req: Request, res: Response) => {
   try {
-    const owner = await requireAdmin(req, res)
+    const owner = await requireStaffAdmin(req, res)
     if (!owner) return
 
     const removed = await userService.removeEmployee(owner.id, req.params.id)
+    void auditLogService.log({
+      actorId: owner.id,
+      actorName: owner.name,
+      actorRole: owner.role,
+      action: 'employee.remove',
+      resourceType: 'user',
+      resourceId: removed.id,
+      meta: {},
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
     sendSuccess(res, removed, 'Employee removed successfully')
   } catch (error) {
     console.error('Remove employee error:', error)
@@ -131,139 +168,24 @@ router.delete('/employees/:id', authenticate, async (req: Request, res: Response
   }
 })
 
-/**
- * POST /api/users/:id/apply-seller
- * User applies to become a seller
- */
-router.post('/:id/apply-seller', authenticate, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params
-    const { shopName, shopDescription } = req.body
-
-    // Verify user is applying for themselves
-    if (id !== req.userId) {
-      sendError(res, 'Unauthorized', 403)
-      return
-    }
-
-    if (!shopName || !shopDescription) {
-      sendError(res, 'Shop name and description are required', 400)
-      return
-    }
-
-    // Get user
-    const user = await userService.getById(id)
-    if (!user) {
-      sendError(res, 'User not found', 404)
-      return
-    }
-
-    // Check if already a seller
-    if (user.role === 'seller') {
-      sendError(res, 'User is already a seller', 400)
-      return
-    }
-
-    // Check if already applied
-    if (user.appliedAsSeller) {
-      sendError(res, 'Application already submitted', 400)
-      return
-    }
-
-    // Update user with seller profile
-    await userService.update(id, {
-      appliedAsSeller: true,
-      sellerApproved: false,
-      sellerProfile: {
-        shopName,
-        shopDescription,
-        rating: 5.0,
-        totalReviews: 0,
-        followers: 0,
-      },
-    })
-
-    const updatedUser = await userService.getById(id)
-    sendSuccess(res, updatedUser, 'Seller application submitted successfully', 201)
-  } catch (error) {
-    console.error('Apply seller error:', error)
-    sendError(res, String(error), 500, 'Failed to submit seller application')
-  }
+router.post('/:id/apply-seller', authenticate, async (_req: Request, res: Response) => {
+  sendError(res, 'Seller applications are disabled in single-owner mode', 410)
 })
 
 /**
  * POST /api/users/:id/approve-seller
  * Admin approves seller application (admin only)
  */
-router.post('/:id/approve-seller', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params
-
-    // only admins can approve sellers
-    // We require the caller to be an admin; use requireAdmin middleware above
-    // Note: For safety we also verify the target user exists below
-
-    const user = await userService.getById(id)
-    if (!user) {
-      sendError(res, 'User not found', 404)
-      return
-    }
-
-    if (!user.appliedAsSeller) {
-      sendError(res, 'User has not applied as seller', 400)
-      return
-    }
-
-    if (user.sellerApproved) {
-      sendError(res, 'Seller already approved', 400)
-      return
-    }
-
-    // Update user
-    await userService.update(id, {
-      role: 'seller',
-      sellerApproved: true,
-    })
-
-    const updatedUser = await userService.getById(id)
-    sendSuccess(res, updatedUser, 'Seller approved successfully')
-  } catch (error) {
-    console.error('Approve seller error:', error)
-    sendError(res, String(error), 500, 'Failed to approve seller')
-  }
+router.post('/:id/approve-seller', authenticate, requireAdmin, async (_req: Request, res: Response) => {
+  sendError(res, 'Seller approvals are disabled in single-owner mode', 410)
 })
 
 /**
  * POST /api/users/:id/reject-seller
  * Admin rejects seller application (admin only)
  */
-router.post('/:id/reject-seller', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params
-
-    const user = await userService.getById(id)
-    if (!user) {
-      sendError(res, 'User not found', 404)
-      return
-    }
-
-    if (!user.appliedAsSeller) {
-      sendError(res, 'User has not applied as seller', 400)
-      return
-    }
-
-    await userService.update(id, {
-      role: 'user',
-      sellerApproved: false,
-      appliedAsSeller: false,
-    })
-
-    const updatedUser = await userService.getById(id)
-    sendSuccess(res, updatedUser, 'Seller application rejected')
-  } catch (error) {
-    console.error('Reject seller error:', error)
-    sendError(res, String(error), 500, 'Failed to reject seller')
-  }
+router.post('/:id/reject-seller', authenticate, requireAdmin, async (_req: Request, res: Response) => {
+  sendError(res, 'Seller applications are disabled in single-owner mode', 410)
 })
 
 
@@ -272,26 +194,20 @@ router.post('/:id/reject-seller', authenticate, requireAdmin, async (req: Reques
  * Admin: list pending seller applications
  */
 router.get('/pending-seller-applications', authenticate, requireAdmin, async (_req: Request, res: Response) => {
-  try {
-    const pending = await userService.getPendingSellerApplications()
-    sendSuccess(res, pending, 'Pending seller applications fetched')
-  } catch (error) {
-    console.error('Get pending seller applications error:', error)
-    sendError(res, String(error), 500, 'Failed to fetch pending applications')
-  }
+  sendSuccess(res, [], 'Seller applications are disabled in single-owner mode')
 })
 
 
 /**
  * POST /api/users/:id/set-role
- * Admin: set a user's role (admin/moderator/seller/user)
+ * Admin: set a user's role (admin/manager/employee/user)
  */
 router.post('/:id/set-role', authenticate, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const { role } = req.body
 
-    if (!role || !['admin', 'moderator', 'seller', 'user'].includes(role)) {
+    if (!role || !['admin', 'manager', 'employee', 'user'].includes(role)) {
       sendError(res, 'Invalid role', 400)
       return
     }
@@ -304,6 +220,19 @@ router.post('/:id/set-role', authenticate, requireAdmin, async (req: Request, re
 
     await userService.update(id, { role })
     const updated = await userService.getById(id)
+    // Audit: role change
+    void auditLogService.log({
+      actorId: req.userId,
+      actorName: (req.user && (req.user as any).name) || undefined,
+      actorRole: (req.user && (req.user as any).role) || undefined,
+      action: 'user.setRole',
+      resourceType: 'user',
+      resourceId: id,
+      meta: { role },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
     sendSuccess(res, updated, 'User role updated')
   } catch (error) {
     console.error('Set role error:', error)
@@ -311,33 +240,8 @@ router.post('/:id/set-role', authenticate, requireAdmin, async (req: Request, re
   }
 })
 
-/**
- * GET /api/users/:id/seller-profile
- * Get seller profile
- */
-router.get('/:id/seller-profile', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params
-
-    const user = await userService.getById(id)
-    if (!user || user.role !== 'seller') {
-      sendError(res, 'Seller not found', 404)
-      return
-    }
-
-    sendSuccess(res, {
-      id: user.id,
-      name: user.name,
-      shopName: user.sellerProfile?.shopName,
-      shopDescription: user.sellerProfile?.shopDescription,
-      rating: user.sellerProfile?.rating,
-      totalReviews: user.sellerProfile?.totalReviews,
-      followers: user.sellerProfile?.followers,
-    }, 'Seller profile fetched')
-  } catch (error) {
-    console.error('Get seller profile error:', error)
-    sendError(res, String(error), 500, 'Failed to fetch seller profile')
-  }
+router.get('/:id/seller-profile', async (_req: Request, res: Response) => {
+  sendError(res, 'Seller profiles are unavailable in single-owner mode', 410)
 })
 
 export default router

@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express'
 import { authenticate, requireAdmin } from '../middlewares/index.js'
+import { auditLogService } from '../services/index.js'
 import { sendSuccess, sendError } from '../utils/response.js'
 import { orderService, userService, productService, businessConfigService } from '../services/index.js'
+import { auditLogService } from '../services/index.js'
 import { OrderStatus, PaymentStatus, User, BusinessConfig } from '../types/index.js'
 
 const router = Router()
@@ -129,6 +131,41 @@ router.get('/users', authenticate, requireAdmin, async (req: Request, res: Respo
   } catch (error) {
     console.error('Admin users error:', error)
     sendError(res, String(error), 500, 'Failed to fetch users')
+  }
+})
+
+
+/**
+ * POST /api/admin/employees/create
+ * Create an employee account (admin). Accepts optional email/password.
+ */
+router.post('/employees/create', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const admin = await userService.getById(req.userId!)
+    if (!admin) {
+      sendError(res, 'Admin not found', 404)
+      return
+    }
+
+    const { email, password, name, title, template, permissions } = req.body
+    const created = await userService.createEmployee(admin.id, { email, password, name, title, template, permissions })
+
+    void auditLogService.log({
+      actorId: admin.id,
+      actorName: admin.name,
+      actorRole: admin.role,
+      action: 'employee.create',
+      resourceType: 'user',
+      resourceId: created.id,
+      meta: { email: created.email, invited: !!(created as any).invited },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+    })
+
+    sendSuccess(res, created, 'Employee account created', 201)
+  } catch (error) {
+    console.error('Admin create employee error:', error)
+    sendError(res, String(error), 500, 'Failed to create employee')
   }
 })
 

@@ -8,9 +8,10 @@ import Footer from './Footer'
 
 function Layout() {
   const { pathname } = useLocation()
-  const { loading, restoreSession, setUser, isAuthenticated } = useAuthStore()
+  const { loading, restoreSession, setUser, isAuthenticated, isProductFormOpen } = useAuthStore()
   const { loadCart } = useCartStore()
-  const isMessagesRoute = pathname === '/messages' || pathname === '/seller/messages'
+  const isMessagesRoute = pathname === '/messages'
+  const hideShell = isMessagesRoute || isProductFormOpen
 
   // Restore session on app mount
   useEffect(() => {
@@ -60,11 +61,11 @@ function Layout() {
 
   return (
     <div className="flex flex-col min-h-screen min-h-[100dvh] bg-background">
-      {!isMessagesRoute && <Header />}
-      <main className={`flex-1 container mx-auto px-4 py-6 sm:py-8 animate-fade-in ${isMessagesRoute ? 'pb-6 sm:pb-8' : 'pb-24 md:pb-8'}`}>
+      {!hideShell && <Header />}
+      <main className={`flex-1 container mx-auto px-4 py-6 sm:py-8 animate-fade-in ${hideShell ? 'pb-6 sm:pb-8' : 'pb-24 md:pb-8'}`}>
         <Outlet />
       </main>
-      {!isMessagesRoute && <Footer />}
+      {!hideShell && <Footer />}
     </div>
   )
 }

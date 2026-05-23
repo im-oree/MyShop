@@ -176,7 +176,7 @@ function OrderDetailPage() {
           <OrderStageTimeline status={order.status} />
 
           <button onClick={handleMessageSeller} className="rounded-2xl border border-border bg-white px-5 py-3 font-medium text-text hover:bg-gray-50">
-            Message seller about this order
+            Message store about this order
           </button>
 
           <Link

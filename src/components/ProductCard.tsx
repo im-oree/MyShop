@@ -8,6 +8,12 @@ interface ProductCardProps {
   product: Product
 }
 
+const PRODUCT_TYPE_LABEL: Record<string, string> = {
+  physical: 'Product',
+  service: 'Service',
+  downloadable: 'Downloadable',
+}
+
 function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
 
@@ -32,6 +38,8 @@ function ProductCard({ product }: ProductCardProps) {
 
       addItem({
         productId: product.id,
+        productName: product.name,
+        productImage: product.images?.[0],
         quantity: 1,
         price: displayPrice,
       })
@@ -97,12 +105,16 @@ function ProductCard({ product }: ProductCardProps) {
 
       {/* Content */}
       <div className="p-3">
-        <p className="text-[10px] uppercase tracking-wider font-semibold
-                      text-muted-text truncate">
-          {product.category}
-        </p>
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-text truncate">
+            {product.category}
+          </p>
+          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+            {PRODUCT_TYPE_LABEL[product.productType || 'physical'] || 'Product'}
+          </span>
+        </div>
 
-        <h3 className="mt-1 text-sm font-semibold text-text leading-snug
+        <h3 className="text-sm font-semibold text-text leading-snug
                        line-clamp-2 min-h-[2.5rem]">
           {product.name}
         </h3>

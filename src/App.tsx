@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import HomePage from '@/pages/HomePage'
 import ProductsPage from '@/pages/ProductsPage'
@@ -15,6 +15,13 @@ import PaymentVerifiedPage from '@/pages/PaymentVerifiedPage'
 import AddressesPage from '@/pages/AddressesPage'
 import NotificationsPage from '@/pages/NotificationsPage'
 import MessagesPage from '@/pages/MessagesPage'
+import AccessManagementPage from '@/pages/AccessManagementPage'
+import SellerShopPage from '@/pages/SellerShopPage'
+import SellerProductsPage from '@/pages/SellerProductsPage'
+import SellerOrdersPage from '@/pages/SellerOrdersPage'
+import SellerOrderDetailPage from '@/pages/SellerOrderDetailPage'
+import SellerAnalyticsPage from '@/pages/SellerAnalyticsPage'
+import AuditLogPage from '@/pages/AuditLogPage'
 
 function App() {
   return (
@@ -36,6 +43,23 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/payment/verified" element={<PaymentVerifiedPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/store" element={<SellerShopPage />} />
+        <Route path="/admin/store/products" element={<SellerProductsPage />} />
+        <Route path="/admin/store/orders" element={<SellerOrdersPage />} />
+        <Route path="/admin/store/orders/completed" element={<SellerOrdersPage />} />
+        <Route path="/admin/store/orders/:id" element={<SellerOrderDetailPage />} />
+        <Route path="/admin/store/analytics" element={<SellerAnalyticsPage />} />
+        <Route path="/admin/store/audit" element={<AuditLogPage />} />
+        <Route path="/admin/store/access" element={<AccessManagementPage />} />
+        <Route path="/admin/store/messages" element={<MessagesPage />} />
+        <Route path="/seller/shop" element={<Navigate to="/admin/store" replace />} />
+        <Route path="/seller/products" element={<Navigate to="/admin/store/products" replace />} />
+        <Route path="/seller/orders" element={<Navigate to="/admin/store/orders" replace />} />
+        <Route path="/seller/orders/completed" element={<Navigate to="/admin/store/orders/completed" replace />} />
+        <Route path="/seller/orders/:id" element={<SellerOrderDetailPage />} />
+        <Route path="/seller/analytics" element={<Navigate to="/admin/store/analytics" replace />} />
+        <Route path="/seller/access" element={<Navigate to="/admin/store/access" replace />} />
+        <Route path="/seller/messages" element={<Navigate to="/admin/store/messages" replace />} />
         {/* Additional routes to be added */}
       </Route>
     </Routes>

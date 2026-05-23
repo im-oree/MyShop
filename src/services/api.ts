@@ -31,3 +31,11 @@ apiClient.interceptors.response.use(
 )
 
 export default apiClient
+
+export const auditService = {
+  async getLogs(page = 1, limit = 50) {
+    const res = await apiClient.get(`/audit?page=${page}&limit=${limit}`)
+    return res.data.data
+  }
+}
+

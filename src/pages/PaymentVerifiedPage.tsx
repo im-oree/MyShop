@@ -3,14 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { paymentService } from '@/services/orderService'
 import { productService } from '@/services/productService'
 import { useCartStore } from '@/store/cartStore'
-import { useAuthStore } from '@/store/authStore'
 import { formatPrice } from '@/utils'
 
 function PaymentVerifiedPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const clearCart = useCartStore((state) => state.clearCart)
-  const { currentRole, switchRole } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [order, setOrder] = useState<any | null>(null)
@@ -52,10 +50,6 @@ function PaymentVerifiedPage() {
   }
 
   useEffect(() => {
-    if (currentRole === 'seller') {
-      switchRole('user')
-    }
-
     const ref = searchParams.get('reference') || ''
     const pendingOrderId = sessionStorage.getItem('pendingOrderId') || undefined
     if (!ref) {
@@ -91,7 +85,7 @@ function PaymentVerifiedPage() {
         setLoading(false)
       }
     })()
-  }, [searchParams, currentRole, switchRole])
+  }, [searchParams])
 
   if (loading) return <div className="p-6">Verifying payment...</div>
   if (error) return (

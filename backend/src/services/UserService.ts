@@ -142,26 +142,24 @@ export class UserService {
    * Get pending seller applications (admin)
    */
   async getPendingSellerApplications(): Promise<User[]> {
-    const snapshot = await this.db.collection(this.collection)
-      .where('appliedAsSeller', '==', true)
-      .get()
-
-    return snapshot.docs
-      .map(doc => doc.data() as User)
-      .filter(user => user.sellerApproved !== true && user.role !== 'seller')
+    return []
   }
 
-  async getEmployeesBySellerId(sellerId: string): Promise<User[]> {
+  async getEmployeesByAdminId(adminId: string): Promise<User[]> {
     const snapshot = await this.db.collection(this.collection)
-      .where('employeeOfSellerId', '==', sellerId)
+      .where('managedByUserId', '==', adminId)
       .where('role', '==', 'employee')
       .get()
 
     return snapshot.docs.map(doc => doc.data() as User)
   }
 
+  async getEmployeesBySellerId(sellerId: string): Promise<User[]> {
+    return this.getEmployeesByAdminId(sellerId)
+  }
+
   async assignEmployee(
-    sellerId: string,
+    adminId: string,
     targetUserId: string,
     title: string,
     template: User['employeeRoleTemplate'],
@@ -169,7 +167,7 @@ export class UserService {
   ): Promise<User> {
     await this.update(targetUserId, {
       role: 'employee',
-      employeeOfSellerId: sellerId,
+      managedByUserId: adminId,
       employeeTitle: title,
       employeeRoleTemplate: template,
       employeePermissions: permissions,
@@ -183,15 +181,15 @@ export class UserService {
   }
 
   async updateEmployeeAccess(
-    sellerId: string,
+    adminId: string,
     employeeUserId: string,
     title: string | undefined,
     template: User['employeeRoleTemplate'],
     permissions: EmployeePermissions,
   ): Promise<User> {
     const employee = await this.getById(employeeUserId)
-    if (!employee || employee.role !== 'employee' || employee.employeeOfSellerId !== sellerId) {
-      throw new Error('Employee not found for this seller')
+    if (!employee || employee.role !== 'employee' || employee.managedByUserId !== adminId) {
+      throw new Error('Employee not found for this owner')
     }
 
     await this.update(employeeUserId, {
@@ -209,13 +207,13 @@ export class UserService {
 
   async removeEmployee(sellerId: string, employeeUserId: string): Promise<User> {
     const employee = await this.getById(employeeUserId)
-    if (!employee || employee.role !== 'employee' || employee.employeeOfSellerId !== sellerId) {
-      throw new Error('Employee not found for this seller')
+    if (!employee || employee.role !== 'employee' || employee.managedByUserId !== sellerId) {
+      throw new Error('Employee not found for this owner')
     }
 
     await this.update(employeeUserId, {
       role: 'user',
-      employeeOfSellerId: undefined,
+      managedByUserId: undefined,
       employeeTitle: undefined,
       employeeRoleTemplate: undefined,
       employeePermissions: undefined,
@@ -226,5 +224,71 @@ export class UserService {
       throw new Error('Failed to remove employee')
     }
     return updated
+  }
+
+  /**
+   * Create an employee account. If email/password provided, a Firebase Auth user is created.
+   * Otherwise an invited Firestore-only employee record is created with an invite token.
+   */
+  async createEmployee(
+    adminId: string,
+    data: {
+      email?: string
+      password?: string
+      name?: string
+      title?: string
+      template?: User['employeeRoleTemplate']
+      permissions?: EmployeePermissions
+    }
+  ): Promise<User> {
+    const { email, password, name, title, template, permissions } = data
+
+    if (email) {
+      // Create Firebase Auth user
+      const authUser = await this.auth.createUser({
+        email,
+        password: password || Math.random().toString(36).slice(2, 10),
+        displayName: name || 'Employee',
+      })
+
+      const user: User = {
+        id: authUser.uid,
+        email,
+        name: name || authUser.displayName || 'Employee',
+        role: 'employee',
+        managedByUserId: adminId,
+        employeeTitle: title,
+        employeeRoleTemplate: template,
+        employeePermissions: permissions,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        addresses: [],
+      }
+
+      await this.db.collection(this.collection).doc(user.id).set(user)
+      return user
+    }
+
+    // Create invited Firestore-only record (invite-only employee)
+    const id = generateId()
+    const inviteToken = generateId()
+    const user: User = {
+      id,
+      email: undefined,
+      name: name || 'Invited Employee',
+      role: 'employee',
+      managedByUserId: adminId,
+      employeeTitle: title,
+      employeeRoleTemplate: template,
+      employeePermissions: permissions,
+      invited: true as any,
+      inviteToken,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      addresses: [],
+    }
+
+    await this.db.collection(this.collection).doc(id).set(user)
+    return user
   }
 }

@@ -1,11 +1,19 @@
 import { Link } from 'react-router-dom'
 import { Product } from '@/types'
 import { formatPrice } from '@/utils'
+import { useAuthStore } from '@/store/authStore'
+import * as rbac from '@/utils/rbac'
 
 interface Props {
   product: Product
   onEdit:   (p: Product) => void
   onDelete: (p: Product) => void
+}
+
+const PRODUCT_TYPE_LABEL: Record<string, string> = {
+  physical: 'Product',
+  service: 'Service',
+  downloadable: 'Downloadable',
 }
 
 export default function SellerProductCard({ product, onEdit, onDelete }: Props) {
@@ -15,6 +23,10 @@ export default function SellerProductCard({ product, onEdit, onDelete }: Props) 
     product.stock === 0   ? 'out'
     : product.stock <= 5  ? 'low'
     : 'ok'
+
+  const { user } = useAuthStore()
+  const perms = rbac.getEffectivePermissions(user)
+  const canManage = rbac.hasAccess(perms.products, 'write')
 
   return (
     <article className="group bg-white rounded-2xl border border-border
@@ -71,9 +83,14 @@ export default function SellerProductCard({ product, onEdit, onDelete }: Props) 
             <p className="text-sm font-semibold text-text truncate leading-tight">
               {product.name}
             </p>
-            <p className="text-[11px] text-muted-text mt-0.5 truncate">
-              {product.category}
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-[11px] text-muted-text truncate">
+                {product.category}
+              </p>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                {PRODUCT_TYPE_LABEL[product.productType || 'physical'] || 'Product'}
+              </span>
+            </div>
           </div>
           <div className="text-right shrink-0">
             <p className="text-sm font-bold text-accent leading-tight">
@@ -113,23 +130,27 @@ export default function SellerProductCard({ product, onEdit, onDelete }: Props) 
         {/* ── Actions ── */}
         {/* Primary row: Edit + View */}
         <div className="grid grid-cols-2 gap-1.5">
-          <button
-            onClick={() => onEdit(product)}
-            className="flex items-center justify-center gap-1.5
-                       bg-primary/5 text-primary border border-primary/20
-                       px-3 py-2 rounded-xl text-xs font-semibold
-                       hover:bg-primary/10 active:scale-[0.97]
-                       transition-all duration-150"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none"
-                 stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0
-                   002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828
-                   15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-          </button>
+          {canManage ? (
+            <button
+              onClick={() => onEdit(product)}
+              className="flex items-center justify-center gap-1.5
+                         bg-primary/5 text-primary border border-primary/20
+                         px-3 py-2 rounded-xl text-xs font-semibold
+                         hover:bg-primary/10 active:scale-[0.97]
+                         transition-all duration-150"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none"
+                   stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0
+                     002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828
+                     15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </button>
+          ) : (
+            <div />
+          )}
 
           <Link
             to={`/products/${product.id}`}
@@ -153,23 +174,25 @@ export default function SellerProductCard({ product, onEdit, onDelete }: Props) 
         </div>
 
         {/* Secondary row: Delete (full width, subtle) */}
-        <button
-          onClick={() => onDelete(product)}
-          className="flex items-center justify-center gap-1.5 w-full
-                     bg-white text-red-400 border border-red-100
-                     px-3 py-1.5 rounded-xl text-xs font-medium
-                     hover:bg-red-50 hover:text-red-600 hover:border-red-200
-                     active:scale-[0.97] transition-all duration-150"
-        >
-          <svg className="w-3.5 h-3.5 shrink-0" fill="none"
-               stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
-                 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
-                 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Delete listing
-        </button>
+        {canManage && (
+          <button
+            onClick={() => onDelete(product)}
+            className="flex items-center justify-center gap-1.5 w-full
+                       bg-white text-red-400 border border-red-100
+                       px-3 py-1.5 rounded-xl text-xs font-medium
+                       hover:bg-red-50 hover:text-red-600 hover:border-red-200
+                       active:scale-[0.97] transition-all duration-150"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none"
+                 stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                   01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0
+                   00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete listing
+          </button>
+        )}
       </div>
     </article>
   )

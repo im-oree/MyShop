@@ -274,12 +274,17 @@ function ProductDetailPage() {
       setCurrentImageIndex(0)
 
       if (data?.category) {
-        const byCategory = await productService.getByCategory(data.category)
-        setRelated(
-          (byCategory.items || [])
-            .filter((item: Product) => item.id !== data.id)
-            .slice(0, 4)
-        )
+        try {
+          const byCategory = await productService.getByCategory(data.category)
+          setRelated(
+            (byCategory.items || [])
+              .filter((item: Product) => item.id !== data.id)
+              .slice(0, 4)
+          )
+        } catch (relatedError) {
+          console.error('Failed to load related products:', relatedError)
+          setRelated([])
+        }
       }
     } catch (err) {
       console.error('Failed to load product:', err)
@@ -333,14 +338,26 @@ function ProductDetailPage() {
 
   const handleAddToCart = useCallback(() => {
     if (!product) return
-    addItem({ productId: product.id, quantity, price: displayPrice })
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images?.[0],
+      quantity,
+      price: displayPrice,
+    })
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }, [addItem, product, quantity, displayPrice])
 
   const handleBuyNow = () => {
     if (!product) return
-    addItem({ productId: product.id, quantity, price: displayPrice })
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images?.[0],
+      quantity,
+      price: displayPrice,
+    })
     navigate('/cart')
   }
 
@@ -610,19 +627,19 @@ function ProductDetailPage() {
               <span className="text-sm text-muted-text">100+ sold</span>
             </div>
 
-            {/* Seller info */}
+            {/* Store info */}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center
                               justify-center overflow-hidden shrink-0">
                 <img
                   src={`https://api.dicebear.com/7.x/initials/svg?seed=${product.sellerName || 'MyShop'}&backgroundColor=dbeafe&textColor=1e40af`}
-                  alt={product.sellerName || 'MyShop Official'}
+                  alt={'MyShop Official'}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-text truncate">
-                  {product.sellerName || 'MyShop Official'}
+                  MyShop Official
                 </p>
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 text-xs text-muted-text">
@@ -633,7 +650,7 @@ function ProductDetailPage() {
                            00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                         clipRule="evenodd" />
                     </svg>
-                    Verified Seller
+                    Verified Store
                   </span>
                   <span className="text-gray-300">•</span>
                   <span className="text-xs text-muted-text">98% positive</span>
@@ -775,7 +792,7 @@ function ProductDetailPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M7 8h10M7 12h6m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
-                  Message seller
+                  Message store
                 </button>
               )}
 

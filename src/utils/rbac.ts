@@ -35,16 +35,37 @@ export const EMPLOYEE_ROLE_TEMPLATES: Record<Exclude<EmployeeRoleTemplate, 'cust
   },
 }
 
+export function getDefaultEmployeePermissions(): EmployeePermissions {
+  return {
+    products: 'none',
+    orders: 'none',
+    analytics: 'none',
+    notifications: 'none',
+    messages: 'none',
+    employees: 'none',
+  }
+}
+
+function normalizePermissions(input?: Partial<EmployeePermissions> | null): EmployeePermissions {
+  const defaults = getDefaultEmployeePermissions()
+  if (!input) return defaults
+  const normalize = (value: unknown): AccessLevel => {
+    if (value === 'read' || value === 'write' || value === 'none') return value
+    return 'none'
+  }
+  return {
+    products: normalize(input.products),
+    orders: normalize(input.orders),
+    analytics: normalize(input.analytics),
+    notifications: normalize(input.notifications),
+    messages: normalize(input.messages),
+    employees: normalize(input.employees),
+  }
+}
+
 export function getEffectivePermissions(user?: User | null): EmployeePermissions {
   if (!user) {
-    return {
-      products: 'none',
-      orders: 'none',
-      analytics: 'none',
-      notifications: 'none',
-      messages: 'none',
-      employees: 'none',
-    }
+    return getDefaultEmployeePermissions()
   }
 
   if (user.role === 'admin' || user.role === 'manager') {
@@ -58,14 +79,11 @@ export function getEffectivePermissions(user?: User | null): EmployeePermissions
     }
   }
 
-  return {
-    products: user.employeePermissions?.products || 'none',
-    orders: user.employeePermissions?.orders || 'none',
-    analytics: user.employeePermissions?.analytics || 'none',
-    notifications: user.employeePermissions?.notifications || 'none',
-    messages: user.employeePermissions?.messages || 'none',
-    employees: user.employeePermissions?.employees || 'none',
+  if (user.role === 'employee') {
+    return normalizePermissions(user.employeePermissions)
   }
+
+  return getDefaultEmployeePermissions()
 }
 
 export function hasAccess(level: AccessLevel, required: 'read' | 'write'): boolean {

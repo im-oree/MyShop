@@ -6,6 +6,7 @@ import { CartService } from './CartService.js'
 import { EmailService, emailService } from './EmailService.js'
 import { NotificationService, notificationService } from './NotificationService.js'
 import { BusinessConfigService } from './BusinessConfigService.js'
+import { AuditService, auditService } from './AuditService.js'
 
 export const productService = new ProductService()
 export const categoryService = new CategoryService()
@@ -14,5 +15,6 @@ export const userService = new UserService()
 export const paymentService = new PaymentService()
 export const cartService = new CartService()
 export const businessConfigService = new BusinessConfigService()
+export const auditLogService = auditService
 
-export { ProductService, CategoryService, OrderService, UserService, PaymentService, CartService, EmailService, emailService, NotificationService, notificationService, BusinessConfigService }
+export { ProductService, CategoryService, OrderService, UserService, PaymentService, CartService, EmailService, emailService, NotificationService, notificationService, BusinessConfigService, AuditService, auditService }

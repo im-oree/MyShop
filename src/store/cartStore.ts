@@ -92,7 +92,27 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set({ syncing: true })
     try {
       const { data } = await apiClient.get('/cart')
-      set({ items: data.data || [] })
+      const rawItems: CartItem[] = data.data || []
+
+      const hydratedItems = await Promise.all(
+        rawItems.map(async (item) => {
+          if (item.productName && item.productImage) return item
+
+          try {
+            const response = await apiClient.get(`/products/${item.productId}`)
+            const product = response?.data?.data
+            return {
+              ...item,
+              productName: item.productName || product?.name,
+              productImage: item.productImage || product?.images?.[0],
+            }
+          } catch {
+            return item
+          }
+        })
+      )
+
+      set({ items: hydratedItems })
     } catch (error) {
       console.error('Failed to load cart:', error)
     } finally {
