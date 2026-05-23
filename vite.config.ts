@@ -20,6 +20,10 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: true,
+    allowedHosts: ['.onrender.com', 'localhost'],
+  },
   build: {
     target: 'ES2020',
     sourcemap: true,
