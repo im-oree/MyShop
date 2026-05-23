@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: myshop-backend
+    runtime: node
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        scope: runtime
+        value: production
+      - key: PORT
+        value: "8000"
+      - key: CORS_ORIGIN
+        scope: runtime
+        value: "" # set to frontend domain(s)
+      - key: FIREBASE_PROJECT_ID
+        scope: runtime
+        value: ""
+      - key: FIREBASE_CLIENT_EMAIL
+        scope: runtime
+        value: ""
+      - key: FIREBASE_PRIVATE_KEY
+        scope: runtime
+        value: ""
+      - key: JWT_SECRET
+        scope: runtime
+        value: ""
+      - key: PAYSTACK_ENV
+        scope: runtime
+        value: "test"
