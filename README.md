@@ -333,15 +333,6 @@ Important production follow-ups:
 - Run `npm audit` and plan dependency upgrades; installation currently reports transitive vulnerabilities.
 - Configure a real email provider and ImgBB key if those optional features are required.
 
-## Screenshots
-
-Playwright was attempted for this documentation pass, but the browser binary could not be downloaded in the sandbox because the Playwright CDN connection was reset. No fabricated UI images have been added. Once Chromium is available, capture screenshots from the running frontend and place them under `docs/screenshots/`, then link them here. The most useful views to capture are:
-
-- Customer home/catalog with category chips and product cards.
-- Product detail and cart.
-- Checkout/payment redirect state.
-- Staff dashboard with analytics and order management.
-
 ## Further documentation
 
 The repository also contains focused notes in `APP_DOCUMENTATION.md`, `ARCHITECTURE.md`, `CLIENT_GUIDE.md`, `DEPLOYMENT.md`, `MIGRATION_PLAN.md`, `PROJECT_SUMMARY.md`, and `QUICKSTART.md`. This README is the canonical entry point for current setup and repository structure.
