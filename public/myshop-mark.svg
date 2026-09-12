@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">MyShop logo</title>
+  <desc id="desc">A navy shopping bag with a blue M mark</desc>
+  <rect width="128" height="128" rx="30" fill="#0f172a"/>
+  <path d="M36 49h56l-4 51H40l-4-51Z" fill="#2563eb"/>
+  <path d="M50 51V42c0-9 6-16 14-16s14 7 14 16v9" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <path d="m50 70 14 16 14-16" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
